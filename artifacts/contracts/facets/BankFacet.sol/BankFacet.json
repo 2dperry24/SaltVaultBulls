@@ -1,0 +1,24 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "BankFacet",
+  "sourceName": "contracts/facets/BankFacet.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "getRewardsBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b50608580601d6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063858a135d14602d575b600080fd5b3360009081526007602052604090205460405190815260200160405180910390f3fea26469706673582212207dcd2251abcc0ec00a57991166abc6d399adfc8c51ab3763a0ed56717bbfa78264736f6c63430008140033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c8063858a135d14602d575b600080fd5b3360009081526007602052604090205460405190815260200160405180910390f3fea26469706673582212207dcd2251abcc0ec00a57991166abc6d399adfc8c51ab3763a0ed56717bbfa78264736f6c63430008140033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
