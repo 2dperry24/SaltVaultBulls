@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Sample Hardhat Project
 
 This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
@@ -12,3 +13,6 @@ npx hardhat node
 npx hardhat run scripts/deploy.ts
 ```
 # SVB
+=======
+# SaltVaultBulls
+>>>>>>> fafaf9048076c3c86c98c862a997e54e7afcb156
