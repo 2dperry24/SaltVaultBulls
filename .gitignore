@@ -1,0 +1,9 @@
+__pycache__
+.env
+.history
+.hypothesis/
+build/
+reports/
+.typechain-types/
+.openzeppelin-contracts/
+.node_modules/
