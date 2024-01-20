@@ -29,8 +29,8 @@ contract AdminSetterFacet {
 
 
     // Function to authorize a External Contract
-    function setAuthorizeExternalContractsForERC721Facet(address _externalContract, bool authorized) external {
-        
+    function setAuthorizedExternalContractsForERC721Facet(address _externalContract, bool authorized) external {
+
         LibDiamond.enforceIsContractOwner();
 
         s.erc721authorizedExternalContracts[_externalContract] = authorized;

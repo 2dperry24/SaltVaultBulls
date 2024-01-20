@@ -49,6 +49,11 @@ describe("InitializationTest", async function () {
     let badActorWallet: any
     let mockedExchange: any
     let fee_receiver_wallet: any
+    let dcaWallet: any
+    let dcaApprovedControlWallet: any
+    let qauntWallet: any
+    let quantApprovedControlWallet: any
+
     let signers: any
 
     let totalMintedUSDCamount: any
@@ -80,8 +85,12 @@ describe("InitializationTest", async function () {
         procurementWallet = signers[7]
         fee_receiver_wallet = signers[8]
         gemTokenBurnWallet = signers[9]
-        vaultFacet = signers[10]
         mockedExchange = signers[30]
+
+        dcaWallet = signers[31]
+        qauntWallet = signers[32]
+        dcaApprovedControlWallet = signers[33]
+        quantApprovedControlWallet = signers[34]
 
         // SaltVaultToken
         const SaltVaultToken = await ethers.getContractFactory("SaltVaultToken")
@@ -107,7 +116,7 @@ describe("InitializationTest", async function () {
         await svbGemTokens.waitForDeployment()
 
         // Transfer tokens from signers[30] to signers[1] through signers[17]
-        const amount = ethers.parseUnits("10000", 6) // Assuming MockedUSDC uses 6 decimal places
+        const amount = ethers.parseUnits("100000", 6) // Assuming MockedUSDC uses 6 decimal places
 
         for (let i = 10; i <= 20; i++) {
             await mockedUSDC.connect(signers[30]).transfer(signers[i].address, amount)
@@ -125,7 +134,7 @@ describe("InitializationTest", async function () {
     })
 
     it("Test p10 has 10,000 mocked USDC and contracts have zero", async function () {
-        expect(await mockedUSDC.balanceOf(signers[10])).to.equal(10_000 * 10 ** 6)
+        expect(await mockedUSDC.balanceOf(signers[10])).to.equal(100_000 * 10 ** 6)
 
         // assert saltVaultBulls contract USDC balance is zero
         expect(await mockedUSDC.balanceOf(mockedUSDC.target)).to.equal(0)
@@ -147,7 +156,7 @@ describe("InitializationTest", async function () {
     it("Confirm Salt Vault Bulls External Contract is set on the diamond", async function () {
         expect(await saltVaultBulls.isContractApprovedToMint()).to.equal(false)
 
-        await adminSetterFacet.seteAuthorizeExternalContractsForERC721Facet(saltVaultBulls.target, true)
+        await adminSetterFacet.setAuthorizedExternalContractsForERC721Facet(saltVaultBulls.target, true)
 
         expect(await saltVaultBulls.isContractApprovedToMint()).to.equal(true)
     })
@@ -199,38 +208,74 @@ describe("InitializationTest", async function () {
         expect(await saltVaultBulls.checkClaimEligibility(6, 1)).to.equal("")
     })
 
-    let costToMintEachNFT = 2500 * 10 ** 6
+    let totalMintingCost = 0
 
-    it("Test p10 minting a Diamond Bull", async function () {
-        let tier = 0 //
+    let p10_spentAmount: number = 0
 
-        let person = signers[10]
+    it("Mint Diamond Bull for p10 to p14", async function () {
+        const tier = 0 // Diamond
+        const mintsPerSigner = 1 // Adjust this number based on your requirements
+        const costToMintEachNFT = 2500 * 10 ** 6
 
-        // Amount to approve (make sure this is sufficient for the mint operation)
-        const amountToApprove = await saltVaultBulls.getCostAndMintEligibility(tier)
+        // Loop over signers[10] to signers[19]
+        for (let i = 10; i <= 14; i++) {
+            for (let j = 0; j < mintsPerSigner; j++) {
+                // Amount to approve (make sure this is sufficient for the mint operation)
+                const amountToApprove = await saltVaultBulls.getCostAndMintEligibility(tier)
 
-        // assert paper.xyz call works
-        expect(await amountToApprove).to.equal(costToMintEachNFT)
+                totalMintingCost += Number(amountToApprove)
 
-        // Approve the proxySVB contract to spend tokens
-        await mockedUSDC.connect(person).approve(saltVaultBulls.target, costToMintEachNFT)
+                if (i == 10) {
+                    p10_spentAmount += Number(amountToApprove)
+                }
 
-        await saltVaultBulls.connect(person).mint(tier, person.address)
+                // assert paper.xyz call works
+                expect(await saltVaultBulls.checkClaimEligibility(tier, 1)).to.equal("")
+
+                // assert paper.xyz call works
+                expect(await amountToApprove).to.equal(costToMintEachNFT)
+
+                // Approve the proxySVB contract to spend tokens
+                await mockedUSDC.connect(signers[i]).approve(saltVaultBulls.target, costToMintEachNFT)
+
+                await saltVaultBulls.connect(signers[i]).mint(tier, signers[i].address)
+            }
+        }
+
+        expect(await saltVaultBulls.totalSupply()).to.equal(5)
     })
 
-    it("Test balances after mint", async function () {
-        expect(await mockedUSDC.balanceOf(signers[10])).to.equal(7_500 * 10 ** 6)
+    it("Mint Ruby Bull for p15 to p19 Person", async function () {
+        const tier = 1 // Ruby
+        const mintsPerSigner = 1 // Adjust this number based on your requirements
+        const costToMintEachNFT = 1000 * 10 ** 6
 
-        console.log("mockedUSDC balance of p10:", await mockedUSDC.balanceOf(signers[10]))
-        console.log("mockedUSDC balance of saltVaultBulls:", await mockedUSDC.balanceOf(saltVaultBulls.target))
-        console.log("mockedUSDC balance of dimaond:", await mockedUSDC.balanceOf(diamondAddress))
-        console.log("mockedUSDC balance of saltVaultBulls:", await mockedUSDC.balanceOf(saltVaultBulls.target))
+        // Loop over signers[10] to signers[19]
+        for (let i = 15; i <= 19; i++) {
+            for (let j = 0; j < mintsPerSigner; j++) {
+                // Amount to approve (make sure this is sufficient for the mint operation)
+                const amountToApprove = await saltVaultBulls.getCostAndMintEligibility(tier)
 
-        // assert saltVaultBulls contract USDC balance is zero
-        expect(await mockedUSDC.balanceOf(saltVaultBulls.target)).to.equal(0)
+                totalMintingCost += Number(amountToApprove)
 
-        // assert diamondAddress contract USDC balance is zero
-        expect(await mockedUSDC.balanceOf(diamondAddress)).to.equal(costToMintEachNFT)
+                if (i == 10) {
+                    p10_spentAmount += Number(amountToApprove)
+                }
+
+                // assert paper.xyz call works
+                expect(await saltVaultBulls.checkClaimEligibility(tier, 1)).to.equal("")
+
+                // assert paper.xyz call works
+                expect(await amountToApprove).to.equal(costToMintEachNFT)
+
+                // Approve the proxySVB contract to spend tokens
+                await mockedUSDC.connect(signers[i]).approve(saltVaultBulls.target, costToMintEachNFT)
+
+                await saltVaultBulls.connect(signers[i]).mint(tier, signers[i].address)
+            }
+        }
+
+        expect(await saltVaultBulls.totalSupply()).to.equal(10)
     })
 
     it("Test Contract balances after this mint", async function () {
@@ -244,113 +289,219 @@ describe("InitializationTest", async function () {
         console.log("totalRewardBalance:", totalRewardBalance)
         console.log("VaultCouncilBalance:", VaultCouncilBalance)
 
-        expect(Number(coreTeamBalance) + Number(vaultHoldingBalance)).to.equal(2500 * 10 ** 6)
+        expect(Number(coreTeamBalance) + Number(vaultHoldingBalance)).to.equal(totalMintingCost)
 
-        expect(Number(coreTeamBalance)).to.equal(2500 * 10 ** 6 * 0.1)
-        expect(Number(vaultHoldingBalance)).to.equal(2500 * 10 ** 6 * 0.9)
+        expect(Number(coreTeamBalance)).to.equal(totalMintingCost * 0.1)
+        expect(Number(vaultHoldingBalance)).to.equal(totalMintingCost * 0.9)
     })
 
-    // describe("Salt Repository Checks", function () {
-    //     describe("salt Wallets", function () {
-    //         it("salt prices are correct for salt repo", async function () {
-    //             let saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([1, 0, 0, 0])
-    //             assert.equal(saltPrice, 1 * 10 ** 6)
+    describe("Salt Check", function () {
+        it("salt prices are correct for salt repo", async function () {
+            let saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([1, 0, 0, 0])
+            assert.equal(saltPrice, 1 * 10 ** 6)
 
-    //             saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([0, 1, 0, 0])
-    //             assert.equal(saltPrice, 9 * 10 ** 6)
+            saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([0, 1, 0, 0])
+            assert.equal(saltPrice, 9 * 10 ** 6)
 
-    //             saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([0, 0, 1, 0])
-    //             assert.equal(saltPrice, 85 * 10 ** 6)
+            saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([0, 0, 1, 0])
+            assert.equal(saltPrice, 85 * 10 ** 6)
 
-    //             saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([0, 0, 0, 1])
-    //             assert.equal(saltPrice, 800 * 10 ** 6)
+            saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([0, 0, 0, 1])
+            assert.equal(saltPrice, 800 * 10 ** 6)
 
-    //             saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([5, 2, 3, 4])
-    //             let cubes = 800 * 4 * 10 ** 6
-    //             let sheets = 85 * 3 * 10 ** 6
-    //             let pillars = 9 * 2 * 10 ** 6
-    //             let grains = 5 * 1 * 10 ** 6
-    //             assert.equal(saltPrice, cubes + sheets + pillars + grains)
-    //         })
+            saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice([5, 2, 3, 4])
+            let cubes = 800 * 4 * 10 ** 6
+            let sheets = 85 * 3 * 10 ** 6
+            let pillars = 9 * 2 * 10 ** 6
+            let grains = 5 * 1 * 10 ** 6
+            assert.equal(saltPrice, cubes + sheets + pillars + grains)
+        })
+    })
 
-    //         it("salt Wallets for Bulls are correct", async function () {
-    //             let bullInfo = await infoGetterFacet.getBullInformation(1)
-    //             expect(Number(bullInfo[0])).to.equal(0) // rarity
-    //             expect(Number(bullInfo[1])).to.equal(6) // grains
-    //             expect(Number(bullInfo[2])).to.equal(1) // pillars
-    //             expect(Number(bullInfo[3])).to.equal(1) // sheets
-    //             expect(Number(bullInfo[4])).to.equal(3) // cubes
-    //             expect(Number(bullInfo[5])).to.equal(0) // salt contribution total
+    describe("create DCA Vault", function () {
+        it("confirm there are no vaults yet", async function () {
+            let count = await vaultFacet.getVaultCount()
+            assert.equal(count, 0)
+        })
 
-    //             bullInfo = await infoGetterFacet.getBullInformation(2)
-    //             expect(Number(bullInfo[0])).to.equal(0) // rarity
-    //             expect(Number(bullInfo[1])).to.equal(0) // grains
-    //             expect(Number(bullInfo[2])).to.equal(0) // pillars
-    //             expect(Number(bullInfo[3])).to.equal(0) // sheets
-    //             expect(Number(bullInfo[4])).to.equal(0) // cubes
-    //             expect(Number(bullInfo[5])).to.equal(0) // salt contribution total
-    //         })
+        it("add DCA Vault", async function () {
+            await vaultFacet.addNewVault("DCA Vault", dcaWallet.address, dcaApprovedControlWallet.address)
 
-    //         it("p10 buys salt for index 1", async function () {
-    //             console.log("mockedUSDC balance of p10:", await mockedUSDC.balanceOf(signers[10]))
-    //             console.log("mockedUSDC balance of saltVaultBulls:", await mockedUSDC.balanceOf(saltVaultBulls.target))
-    //             console.log("mockedUSDC balance of dimaond:", await mockedUSDC.balanceOf(diamondAddress))
-    //             console.log("mockedUSDC balance of saltRepositoryFacet:", await mockedUSDC.balanceOf(saltRepositoryFacet))
-    //             console.log("mockedUSDC balance of saltVaultBulls:", await mockedUSDC.balanceOf(saltVaultBulls.target))
+            let vaultInfo = await vaultFacet.getVault(0)
+            expect(vaultInfo[0]).to.equal("DCA Vault") // name
+            expect(Number(vaultInfo[1])).to.equal(0) // totalSalt
+            expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
+            expect(Number(vaultInfo[3])).to.equal(0) // withdrawableAmount
+            expect(Number(vaultInfo[4])).to.equal(0) // dispersableProfitAmount
+            expect(Number(vaultInfo[5])).to.equal(0) // lifetimeRewardAmount
+            expect(vaultInfo[6]).to.equal(dcaWallet.address) // walletAddress
+            expect(vaultInfo[7]).to.equal(dcaApprovedControlWallet.address) // approvedControlWallet
+        })
 
-    //             let saltPackage = [1, 1, 1, 1]
+        it("confirm we now have 1 vault", async function () {
+            let count = await vaultFacet.getVaultCount()
+            assert.equal(count, 1)
+        })
 
-    //             let bullInfo = await infoGetterFacet.getBullInformation(1)
-    //             expect(await saltVaultBulls.ownerOf(1)).to.equal(signers[10])
+        it("add Quant Vault", async function () {
+            await vaultFacet.addNewVault("Quant Vault", qauntWallet.address, quantApprovedControlWallet.address)
 
-    //             let balanceBefore = await mockedUSDC.balanceOf(signers[10])
-    //             let saltPrice = await saltRepositoryFacet.getSaltGrainPurchasePrice(saltPackage)
+            let vaultInfo = await vaultFacet.getVault(1)
+            expect(vaultInfo[0]).to.equal("Quant Vault") // name
+            expect(Number(vaultInfo[1])).to.equal(0) // totalSalt
+            expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
+            expect(Number(vaultInfo[3])).to.equal(0) // withdrawableAmount
+            expect(Number(vaultInfo[4])).to.equal(0) // dispersableProfitAmount
+            expect(Number(vaultInfo[5])).to.equal(0) // lifetimeRewardAmount
+            expect(vaultInfo[6]).to.equal(qauntWallet.address) // walletAddress
+            expect(vaultInfo[7]).to.equal(quantApprovedControlWallet.address) // approvedControlWallet
+        })
 
-    //             await mockedUSDC.connect(signers[10]).approve(saltRepositoryFacet.target, saltPrice)
+        it("confirm we now have 2 vaults", async function () {
+            let count = await vaultFacet.getVaultCount()
+            assert.equal(count, 2)
+        })
+    })
 
-    //             console.log("p10 mockedUSDC before:", Number(balanceBefore) / 10 ** 6)
-    //             console.log("saltPrice:", Number(saltPrice) / 10 ** 6)
+    let totalSaltInDCAVault: number = 0
+    let totalWithdrawableAmountForDCAVault: number = 0
+    describe("p10 - 14 depsit there salt into the DCA Vault", function () {
+        it("each person deposits salt", async function () {
+            // Calculate expected values using integer arithmetic
+            let expectedTotalSalt = 3116 + Math.floor((3116 * 1) / 10) // Use Math.floor to simulate integer division
+            // let expectedSaltValue = Math.floor(2500 * 10 ** 6 * 9) / 10
 
-    //             await expect(saltRepositoryFacet.connect(signers[10]).purchaseSaltGrains(1, saltPackage)).to.emit(saltRepositoryFacet, "SaltGrainsPurchased").withArgs(1n, 1n, 1n, 1n, 1n, saltPrice)
+            let expectedSaltValue = 2500 * 10 ** 6
 
-    //             let balanceAfter = await mockedUSDC.balanceOf(signers[10])
+            let index = 1
+            let vault = 0
+            for (let i = 10; i <= 14; i++) {
+                let bullInfo = await infoGetterFacet.getBullInformation(index)
 
-    //             console.log("p10 mockedUSDC after:", Number(balanceAfter) / 10 ** 6)
+                console.log("walletOfOwner", await saltVaultBulls.walletOfOwner(signers[i]))
+                console.log("bullInfo", bullInfo)
 
-    //             console.log("mockedUSDC balance of p10:", await mockedUSDC.balanceOf(signers[10]))
-    //             console.log("mockedUSDC balance of saltVaultBulls:", await mockedUSDC.balanceOf(saltVaultBulls.target))
-    //             console.log("mockedUSDC balance of dimaond:", await mockedUSDC.balanceOf(diamondAddress))
-    //             console.log("mockedUSDC balance of saltRepositoryFacet:", await mockedUSDC.balanceOf(saltRepositoryFacet))
-    //             console.log("mockedUSDC balance of saltVaultBulls:", await mockedUSDC.balanceOf(saltVaultBulls.target))
+                expect(Number(bullInfo[0])).to.equal(0) // rarity
+                expect(Number(bullInfo[1])).to.equal(6) // grains
+                expect(Number(bullInfo[2])).to.equal(1) // pillars
+                expect(Number(bullInfo[3])).to.equal(1) // sheets
+                expect(Number(bullInfo[4])).to.equal(3) // cubes
+                expect(Number(bullInfo[5])).to.equal(0) // totalVaultedSalt
 
-    //             assert.equal(balanceAfter, balanceBefore - saltPrice)
-    //         })
+                // add salt to the vault
+                await expect(vaultFacet.connect(signers[i]).allocateSaltToVault(index, vault, 6, 1, 1, 3))
+                    .to.emit(vaultFacet, "SaltAllocatedToVault")
+                    .withArgs(index, vault, expectedTotalSalt, expectedSaltValue, 6, 1, 1, 3)
 
-    //         it("salt Wallets updated correctly for Bull 1 after salt purchase", async function () {
-    //             let bullInfo = await infoGetterFacet.getBullInformation(1)
-    //             expect(Number(bullInfo[0])).to.equal(0) // rarity
-    //             expect(Number(bullInfo[1])).to.equal(7) // grains
-    //             expect(Number(bullInfo[2])).to.equal(2) // pillars
-    //             expect(Number(bullInfo[3])).to.equal(2) // sheets     // updated by 1
-    //             expect(Number(bullInfo[4])).to.equal(4) // cubes
-    //             expect(Number(bullInfo[5])).to.equal(0) // salt contribution total
+                bullInfo = await infoGetterFacet.getBullInformation(index)
+                expect(Number(bullInfo[0])).to.equal(0) // rarity
+                expect(Number(bullInfo[1])).to.equal(0) // grains
+                expect(Number(bullInfo[2])).to.equal(0) // pillars
+                expect(Number(bullInfo[3])).to.equal(0) // sheets
+                expect(Number(bullInfo[4])).to.equal(0) // cubes
+                expect(Number(bullInfo[5])).to.equal(expectedTotalSalt) // totalVaultedSalt
 
-    //             bullInfo = await infoGetterFacet.getBullInformation(2)
-    //             expect(Number(bullInfo[0])).to.equal(0) // rarity
-    //             expect(Number(bullInfo[1])).to.equal(0) // grains
-    //             expect(Number(bullInfo[2])).to.equal(0) // pillars
-    //             expect(Number(bullInfo[3])).to.equal(0) // sheets
-    //             expect(Number(bullInfo[4])).to.equal(0) // cubes
-    //             expect(Number(bullInfo[5])).to.equal(0) // salt contribution total
-    //         })
+                totalSaltInDCAVault += Number(expectedTotalSalt)
+                totalWithdrawableAmountForDCAVault += (Number(expectedSaltValue) * 9) / 10
 
-    //         it("should revert with buying zero salt", async function () {
-    //             await expect(saltRepositoryFacet.connect(signers[10]).purchaseSaltGrains(1, [0, 0, 0, 0])).to.revertedWith("Salt count to purchase can't be zero")
-    //         })
+                index++
+            }
+        })
 
-    //         it("should revert when trying to buy salt for a bull you don't own", async function () {
-    //             await expect(saltRepositoryFacet.connect(signers[7]).purchaseSaltGrains(1, [0, 0, 0, 0])).to.revertedWith("You do not own this Bull")
-    //         })
-    // })
-    //})
+        it("Confirm DCA Vault Information after salt deposits", async function () {
+            let vaultInfo = await vaultFacet.getVault(0)
+            expect(vaultInfo[0]).to.equal("DCA Vault") // name
+            expect(Number(vaultInfo[1])).to.equal(totalSaltInDCAVault) // totalSalt
+            expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
+            expect(Number(vaultInfo[3])).to.equal(totalWithdrawableAmountForDCAVault) // withdrawableAmount
+            expect(Number(vaultInfo[4])).to.equal(0) // dispersableProfitAmount
+            expect(Number(vaultInfo[5])).to.equal(0) // lifetimeRewardAmount
+            expect(vaultInfo[6]).to.equal(dcaWallet.address) // walletAddress
+            expect(vaultInfo[7]).to.equal(dcaApprovedControlWallet.address) // approvedControlWallet
+        })
+
+        it("Confirm Quant Vault is still zero", async function () {
+            await vaultFacet.addNewVault("Quant Vault", qauntWallet.address, quantApprovedControlWallet.address)
+
+            let vaultInfo = await vaultFacet.getVault(1)
+            expect(vaultInfo[0]).to.equal("Quant Vault") // name
+            expect(Number(vaultInfo[1])).to.equal(0) // totalSalt
+            expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
+            expect(Number(vaultInfo[3])).to.equal(0) // withdrawableAmount
+            expect(Number(vaultInfo[4])).to.equal(0) // dispersableProfitAmount
+            expect(Number(vaultInfo[5])).to.equal(0) // lifetimeRewardAmount
+            expect(vaultInfo[6]).to.equal(qauntWallet.address) // walletAddress
+            expect(vaultInfo[7]).to.equal(quantApprovedControlWallet.address) // approvedControlWallet
+        })
+    })
+
+    let totalSaltInQuantAVault: number = 0
+    let totalWithdrawableAmountForQuantVault: number = 0
+    describe("p15 - 19 depsit there salt into the Quant Vault", function () {
+        it("each person deposits salt", async function () {
+            // Calculate expected values using integer arithmetic
+            let expectedTotalSalt = 1233 + Math.floor((1233 * 1) / 10) // Use Math.floor to simulate integer division
+            let expectedSaltValue = 1000 * 10 ** 6
+
+            let index = 51
+            let vault = 1
+            for (let i = 15; i <= 19; i++) {
+                let bullInfo = await infoGetterFacet.getBullInformation(index)
+
+                console.log("walletOfOwner", await saltVaultBulls.walletOfOwner(signers[i]))
+                console.log("bullInfo", bullInfo)
+
+                expect(Number(bullInfo[0])).to.equal(1) // rarity
+                expect(Number(bullInfo[1])).to.equal(3) // grains
+                expect(Number(bullInfo[2])).to.equal(3) // pillars
+                expect(Number(bullInfo[3])).to.equal(2) // sheets
+                expect(Number(bullInfo[4])).to.equal(1) // cubes
+                expect(Number(bullInfo[5])).to.equal(0) // totalVaultedSalt
+
+                // add salt to the vault
+                await expect(vaultFacet.connect(signers[i]).allocateSaltToVault(index, vault, 3, 3, 2, 1))
+                    .to.emit(vaultFacet, "SaltAllocatedToVault")
+                    .withArgs(index, vault, expectedTotalSalt, expectedSaltValue, 3, 3, 2, 1)
+
+                bullInfo = await infoGetterFacet.getBullInformation(index)
+                expect(Number(bullInfo[0])).to.equal(1) // rarity
+                expect(Number(bullInfo[1])).to.equal(0) // grains
+                expect(Number(bullInfo[2])).to.equal(0) // pillars
+                expect(Number(bullInfo[3])).to.equal(0) // sheets
+                expect(Number(bullInfo[4])).to.equal(0) // cubes
+                expect(Number(bullInfo[5])).to.equal(expectedTotalSalt) // totalVaultedSalt
+
+                totalSaltInQuantAVault += Number(expectedTotalSalt)
+                totalWithdrawableAmountForQuantVault += (Number(expectedSaltValue) * 9) / 10
+
+                index++
+            }
+        })
+
+        it("Confirm DCA Vault Information after salt deposits", async function () {
+            let vaultInfo = await vaultFacet.getVault(0)
+            expect(vaultInfo[0]).to.equal("DCA Vault") // name
+            expect(Number(vaultInfo[1])).to.equal(totalSaltInDCAVault) // totalSalt
+            expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
+            expect(Number(vaultInfo[3])).to.equal(totalWithdrawableAmountForDCAVault) // withdrawableAmount
+            expect(Number(vaultInfo[4])).to.equal(0) // dispersableProfitAmount
+            expect(Number(vaultInfo[5])).to.equal(0) // lifetimeRewardAmount
+            expect(vaultInfo[6]).to.equal(dcaWallet.address) // walletAddress
+            expect(vaultInfo[7]).to.equal(dcaApprovedControlWallet.address) // approvedControlWallet
+        })
+
+        it("Confirm Quant Vault is still zero", async function () {
+            await vaultFacet.addNewVault("Quant Vault", qauntWallet.address, quantApprovedControlWallet.address)
+
+            let vaultInfo = await vaultFacet.getVault(1)
+            expect(vaultInfo[0]).to.equal("Quant Vault") // name
+            expect(Number(vaultInfo[1])).to.equal(totalSaltInQuantAVault) // totalSalt
+            expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
+            expect(Number(vaultInfo[3])).to.equal(totalWithdrawableAmountForQuantVault) // withdrawableAmount
+            expect(Number(vaultInfo[4])).to.equal(0) // dispersableProfitAmount
+            expect(Number(vaultInfo[5])).to.equal(0) // lifetimeRewardAmount
+            expect(vaultInfo[6]).to.equal(qauntWallet.address) // walletAddress
+            expect(vaultInfo[7]).to.equal(quantApprovedControlWallet.address) // approvedControlWallet
+        })
+    })
 })

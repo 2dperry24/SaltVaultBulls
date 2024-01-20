@@ -795,7 +795,7 @@ contract ERC721Facet is IERC721Facet {
             s.bulls[indexToMint].rarity = 1;
             s.bulls[indexToMint].cubes = 1;
             s.bulls[indexToMint].sheets = 2;
-            s.bulls[indexToMint].pillars = 2;
+            s.bulls[indexToMint].pillars = 3;
             s.bulls[indexToMint].grains = 3;
             s.gemTokenMintCredits[_addressToMintTo] = 6;
         } else if (rarity == 2) {

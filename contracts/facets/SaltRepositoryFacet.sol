@@ -26,10 +26,6 @@ contract SaltRepositoryFacet {
     uint256 totalCost
     );
 
-
-
-
-
     function getSaltGrainPurchasePrice(
         uint256[4] memory amounts // An array with four elements
     ) public view returns (uint256) {
@@ -43,14 +39,6 @@ contract SaltRepositoryFacet {
 
         return totalCost;
     }
-
-
-
-
-
-
-
-
 
 
     function purchaseSaltGrains(

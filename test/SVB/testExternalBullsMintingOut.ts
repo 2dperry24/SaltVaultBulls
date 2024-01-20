@@ -431,13 +431,6 @@ describe("InitializationTest", async function () {
             expect(await mockedUSDC.balanceOf(ERC721Facet.target)).to.equal(totalMintingCost)
         })
 
-        // it("Test salt Wallet for the minted Bull", async function () {
-        //     // confirm total Supply is 1
-
-        //     console.log("getBullInformation(1):", await infoGetterFacet.getBullInformation(1))
-        //     console.log("getBullInformation(2):", await infoGetterFacet.getBullInformation(2))
-        // })
-
         it("Test Contract balances after this mint", async function () {
             let coreTeamBalance = await infoGetterFacet.getCoreTeamBalance()
             let vaultHoldingBalance = await infoGetterFacet.getVaultHoldingBalance()

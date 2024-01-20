@@ -135,10 +135,10 @@ contract DiamondInit {
 
 
         // Salt Repository
-        s.grainCost = 1 * 10**6;
-        s.pillarCost = 9 * 10**6;
-        s.sheetCost = 85 * 10**6;
-        s.cubeCost = 800 * 10**6;
+        s.grainCost = 1 * 10 ** 6;
+        s.pillarCost = 9 * 10 ** 6;
+        s.sheetCost = 85 * 10 ** 6;
+        s.cubeCost = 800 * 10 ** 6;
         s.grainCount = 1;
         s.pillarCount = 10;
         s.sheetCount = 100;

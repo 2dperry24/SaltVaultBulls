@@ -24,6 +24,11 @@ contract VaultFacet {
 
     event ProfitsDepositedToVault(uint256 indexed vaultIndex, uint256 startIndex, uint256 endIndex);
 
+
+
+    event SaltAllocatedToVault(uint256 indexed tokenId, uint256 indexed vaultIndex, uint256 totalGrains, uint256 saltValue, uint256 grains, uint256 pillars, uint256 sheets, uint256 cubes);
+
+
     // Send Salt to Vaults 
     function allocateSaltToVault(uint256 tokenId, uint256 vaultIndex, uint256 grains, uint256 pillars, uint256 sheets, uint256 cubes) public  {
 
@@ -87,10 +92,10 @@ contract VaultFacet {
         vault.depositedSaltAmount[tokenId] += totalGrains;
 
         // Add totalGrains into totalSalt allocated to vaults for the Bull
-        bull.totalSaltContributions += totalGrains;
+        bull.totalVaultedSalt += totalGrains;
         
         // Check to see if we need to add this NFT into the Vault Council
-        if (bull.totalSaltContributions >= 5000 && s.vaultCouncilCount < 100 && !s.indexInVaultCouncil[tokenId]) {
+        if (bull.totalVaultedSalt >= 5000 && s.vaultCouncilCount < 100 && !s.indexInVaultCouncil[tokenId]) {
             s.vaultCouncil[s.vaultCouncilCount] = tokenId;
             s.vaultCouncilCount++; // Increment the count
             s.indexInVaultCouncil[tokenId] = true; // Mark as added to the Vault Council
@@ -100,10 +105,16 @@ contract VaultFacet {
         vault.depositedSaltAmount[tokenId]+= totalGrains;
    
         // Logic to know how much USDC this vault is allowed to withdraw from the contract with tax accounted for
-        vault.withdrawableAmount += saltValue * 90 / 100;
+        uint256 withdrawableAmount = saltValue * 90 / 100;
+        vault.withdrawableAmount += withdrawableAmount;
 
         // change flag
         s.allocateSaltToVaultReentrancyFlag = 0;
+
+
+        // Emit the event after the salt has been allocated
+        emit SaltAllocatedToVault(tokenId, vaultIndex, totalGrains, saltValue, grains, pillars, sheets, cubes);
+
     }
 
 
@@ -252,47 +263,90 @@ contract VaultFacet {
 
     }
 
+    function getVaultCount() public view returns (uint256){
 
-    function setCompoundingRate(uint256 tokenId, uint256 vaultId, uint256 compoundingRate) external {
+        return s.vaults.length;
 
-        // Ensure the caller owns the NFT
-        if(s.erc721owners[s.bullsExternalContractAddress][tokenId] != msg.sender) {revert("You do not own this Bull");}
-    
-        // Check if the provided rate is allowed
-        if (s.allowedCompoundingRates[compoundingRate] ) { revert("Must be an approved Compounding Rate, e.g Divisible by 10");}
-
-        // Fetch the Vault struct for the given vaultId
-        Vault storage vault = s.vaults[vaultId];
-
-        // Update the NFT's compounding rate in the vault
-        vault.nftVaultCompoundingRate[tokenId] = compoundingRate;
-
-        // Emit an event (optional, but good practice)
-        emit CompoundingRateUpdated(tokenId, vaultId, compoundingRate);
     }
 
 
+ 
+
+
+
+    // function setCompoundingRate(uint256 tokenId, uint256 vaultId, uint256 compoundingRate) external {
+
+    //     // Ensure the caller owns the NFT
+    //     if(s.erc721owners[s.bullsExternalContractAddress][tokenId] != msg.sender) {revert("You do not own this Bull");}
+    
+    //     // Check if the provided rate is allowed
+    //     if (s.allowedCompoundingRates[compoundingRate] ) { revert("Must be an approved Compounding Rate, e.g Divisible by 10");}
+        
+    //     // Update the NFT's compounding rate in the vault
+    //     s.vaults.nftVaultCompoundingRate[vaultId][tokenId] = compoundingRate;
+
+    //     // Emit an event (optional, but good practice)
+    //     emit CompoundingRateUpdated(tokenId, vaultId, compoundingRate);
+    // }
+
+
     function getCompoundingRateForIndex(uint256 tokenId, uint256 vaultId) public view returns (uint256) {
-        Vault storage vault = s.vaults[vaultId];
-        return vault.nftVaultCompoundingRate[tokenId];
+        return s.vaults[vaultId].nftVaultCompoundingRate[tokenId];
     }
 
 
     function getDepositedSaltForIndex(uint256 tokenId, uint256 vaultId) public view returns (uint256) {
-        Vault storage vault = s.vaults[vaultId];
-        return vault.depositedSaltAmount[tokenId];
+        return s.vaults[vaultId].depositedSaltAmount[tokenId];
     }
 
 
     function getContinousMonthsCompoundingForIndex(uint256 tokenId, uint256 vaultId) public view returns (uint256) {
-        Vault storage vault = s.vaults[vaultId];
-        return vault.continuousMonthsCompounding[tokenId];
+        return s.vaults[vaultId].continuousMonthsCompounding[tokenId];
     }
 
     function getIsIndexEligibleForBonusDuringSaltDeposit(uint256 tokenId, uint256 vaultId) public view returns (bool) {
-        Vault storage vault = s.vaults[vaultId];
-        return vault.bonusEligibleForVaultDeposit[tokenId];
+        return s.vaults[vaultId].bonusEligibleForVaultDeposit[tokenId];
     }
+
+
+
+    // Getter for the basic properties of a Vault
+    function getVault(uint256 vaultId) public view returns (string memory, uint256, uint256, uint256, uint256, uint256, address, address) {
+        Vault storage vault = s.vaults[vaultId];
+        return (
+            vault.name,
+            vault.totalSalt,
+            vault.totalRewardPoints,
+            vault.withdrawableAmount,
+            vault.disperableProfitAmount,
+            vault.lifetimeRewardAmount,
+            vault.walletAddress,
+            vault.approvedControlWallet
+        );
+    }
+
+    // Separate getters for each mapping in the Vault
+    function getDepositedSaltAmount(uint256 vaultId, uint256 nftId) public view returns (uint256) {
+        return s.vaults[vaultId].depositedSaltAmount[nftId];
+    }
+
+    function getNftVaultCompoundingRate(uint256 vaultId, uint256 nftId) public view returns (uint256) {
+        return s.vaults[vaultId].nftVaultCompoundingRate[nftId];
+    }
+
+    function getNftRewardPoints(uint256 vaultId, uint256 nftId) public view returns (uint256) {
+        return s.vaults[vaultId].nftRewardPoints[nftId];
+    }
+
+    function getContinuousMonthsCompounding(uint256 vaultId, uint256 nftId) public view returns (uint256) {
+        return s.vaults[vaultId].continuousMonthsCompounding[nftId];
+    }
+
+    function getBonusEligibilityForVaultDeposit(uint256 vaultId, uint256 nftId) public view returns (bool) {
+        return s.vaults[vaultId].bonusEligibleForVaultDeposit[nftId];
+    }
+
+
 
 
 

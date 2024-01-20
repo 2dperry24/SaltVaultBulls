@@ -22,7 +22,7 @@ contract InfoGetterFacet  {
 
 
     function getBullInformation(uint256 _index) external view returns (uint256, uint256, uint256, uint256, uint256,uint256) {
-        return (s.bulls[_index].rarity, s.bulls[_index].grains, s.bulls[_index].pillars, s.bulls[_index].sheets, s.bulls[_index].cubes, s.bulls[_index].totalSaltContributions );
+        return (s.bulls[_index].rarity, s.bulls[_index].grains, s.bulls[_index].pillars, s.bulls[_index].sheets, s.bulls[_index].cubes, s.bulls[_index].totalVaultedSalt );
     }
 
 

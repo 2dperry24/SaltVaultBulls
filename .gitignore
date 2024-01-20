@@ -19,7 +19,8 @@
 *.swo
 
 # TypeChain output
-/typechain
+/typechain-types
+
 
 # OpenZeppelin contracts (if not needed)
 /openzeppelin-contracts

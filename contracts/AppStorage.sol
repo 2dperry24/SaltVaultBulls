@@ -45,7 +45,7 @@ struct Bull {
     uint256 pillars;
     uint256 sheets;
     uint256 cubes;
-    uint256 totalSaltContributions; // Total salt contributions across all vaults
+    uint256 totalVaultedSalt; // Total salt contributions across all vaults
 }
 
 
