@@ -42,3 +42,6 @@ Thumbs.db
 
 # Optional: Coverage reports
 coverage
+
+# linters 
+lint.sol
