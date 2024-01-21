@@ -10,6 +10,9 @@ import {LibERC721} from "../libraries/LibERC721.sol";
 import {LibAppStorage} from "../libraries/LibAppStorage.sol";
 
 
+import "hardhat/console.sol";
+
+
 contract VaultFacet {
 
     using LibSafeERC20 for IERC20;
@@ -101,9 +104,7 @@ contract VaultFacet {
             s.indexInVaultCouncil[tokenId] = true; // Mark as added to the Vault Council
         }
 
-        // Update the vault salt count for this NFT
-        vault.depositedSaltAmount[tokenId]+= totalGrains;
-   
+
         // Logic to know how much USDC this vault is allowed to withdraw from the contract with tax accounted for
         uint256 withdrawableAmount = saltValue * 90 / 100;
         vault.withdrawableAmount += withdrawableAmount;
@@ -141,7 +142,7 @@ contract VaultFacet {
 
         Vault storage vault = s.vaults[vaultIndex];
 
-        if(msg.sender != vault.approvedControlWallet){revert("must be an approved wallet");}
+        if(msg.sender != vault.approvedControlWallet){revert("must be the approved vault wallet");}
 
         if (vaultIndex > s.vaults.length) { revert("Invalid Vault Number");}
 
@@ -153,9 +154,10 @@ contract VaultFacet {
         s.globalPayoutAmount += profitAmount; 
 
         uint256 totalRewardPoints;
-        for (uint256 i = 1; i <= s.erc721allTokens[s.bullsExternalContractAddress].length; i++) {
-            
+        for (uint256 i = 0; i < s.erc721allTokens[s.bullsExternalContractAddress].length; i++) {
+
             uint256 tokenId = s.erc721allTokens[s.bullsExternalContractAddress][i];
+
             Bull storage bull = s.bulls[tokenId]; 
             uint256 nftSaltCount = vault.depositedSaltAmount[tokenId];
             if (nftSaltCount > 0) {
@@ -173,11 +175,11 @@ contract VaultFacet {
 
 
 
-    function rewardVaultIndex(uint256 vaultIndex, uint256 startIndex, uint256 endIndex) public {
+    function rewardVaultIndex(uint256 vaultIndex, uint256 startIndex, uint256 endIndex) external {
 
         Vault storage vault = s.vaults[vaultIndex];
 
-        if(msg.sender != vault.approvedControlWallet){revert("must be an approved wallet");}
+        if(msg.sender != vault.approvedControlWallet){revert("must be the approved vault wallet");}
 
 
         if (endIndex <= startIndex) { revert("start is larger than end");}
@@ -271,6 +273,14 @@ contract VaultFacet {
 
 
  
+    function checkVaultCompoudingRate(uint256 _rate) public view returns (bool){
+
+        return s.allowedCompoundingRates[_rate];
+
+    }
+
+
+ 
 
 
 
@@ -288,6 +298,9 @@ contract VaultFacet {
     //     // Emit an event (optional, but good practice)
     //     emit CompoundingRateUpdated(tokenId, vaultId, compoundingRate);
     // }
+    function getVaultWithdrawableAmount(uint256 vaultId) public view returns (uint256) {
+        return s.vaults[vaultId].withdrawableAmount;
+    }
 
 
     function getCompoundingRateForIndex(uint256 tokenId, uint256 vaultId) public view returns (uint256) {
@@ -311,7 +324,7 @@ contract VaultFacet {
 
 
     // Getter for the basic properties of a Vault
-    function getVault(uint256 vaultId) public view returns (string memory, uint256, uint256, uint256, uint256, uint256, address, address) {
+    function getVaultInformation(uint256 vaultId) public view returns (string memory, uint256, uint256, uint256, uint256, uint256, address, address) {
         Vault storage vault = s.vaults[vaultId];
         return (
             vault.name,
@@ -349,7 +362,43 @@ contract VaultFacet {
 
 
 
+    function setVaultCompoundingRate(uint256 vaultId, uint256 tokenId, uint256 compoundingRate) external {
+      
+         // Ensure the caller owns the NFT
+        if(s.erc721owners[s.bullsExternalContractAddress][tokenId] != msg.sender) {revert("You do not own this Bull");}
+      
+        // Check if the provided rate is allowed
+        if (!s.allowedCompoundingRates[compoundingRate]) { revert("Must be an allowed compounding Rate");}
+
+        // Update the NFT's compounding rate in the vault
+        s.vaults[vaultId].nftVaultCompoundingRate[tokenId] = compoundingRate;
+
+        // Emit an event (optional, but good practice)
+        emit CompoundingRateUpdated(tokenId, vaultId, compoundingRate);
+    }
 
 
+
+
+
+
+
+    function withdrawVaultFunds(uint256 vaultIndex) external {
+
+        Vault storage vault = s.vaults[vaultIndex];
+
+        if(msg.sender != vault.approvedControlWallet){revert("must be the approved Control Wallet for this vault");}
+
+        uint256 balanceToWithdraw = s.vaults[vaultIndex].withdrawableAmount;
+       
+        IERC20(s.usdcTokenContract).safeTransfer(vault.approvedControlWallet, balanceToWithdraw);
+
+        // reset the vaults withdrawableAmount 
+        s.vaults[vaultIndex].withdrawableAmount = 0; 
+
+        // deduct the amount from the VaultsHoldingAmount
+        s.vaultHoldingBalance -= balanceToWithdraw;
+
+    }
 
 }

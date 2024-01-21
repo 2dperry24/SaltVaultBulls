@@ -53,6 +53,7 @@ describe("InitializationTest", async function () {
     let dcaApprovedControlWallet: any
     let qauntWallet: any
     let quantApprovedControlWallet: any
+    let mockedBinanceAccount: any
 
     let signers: any
 
@@ -91,6 +92,7 @@ describe("InitializationTest", async function () {
         qauntWallet = signers[32]
         dcaApprovedControlWallet = signers[33]
         quantApprovedControlWallet = signers[34]
+        mockedBinanceAccount = signers[35]
 
         // SaltVaultToken
         const SaltVaultToken = await ethers.getContractFactory("SaltVaultToken")
@@ -327,7 +329,7 @@ describe("InitializationTest", async function () {
         it("add DCA Vault", async function () {
             await vaultFacet.addNewVault("DCA Vault", dcaWallet.address, dcaApprovedControlWallet.address)
 
-            let vaultInfo = await vaultFacet.getVault(0)
+            let vaultInfo = await vaultFacet.getVaultInformation(0)
             expect(vaultInfo[0]).to.equal("DCA Vault") // name
             expect(Number(vaultInfo[1])).to.equal(0) // totalSalt
             expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
@@ -346,7 +348,7 @@ describe("InitializationTest", async function () {
         it("add Quant Vault", async function () {
             await vaultFacet.addNewVault("Quant Vault", qauntWallet.address, quantApprovedControlWallet.address)
 
-            let vaultInfo = await vaultFacet.getVault(1)
+            let vaultInfo = await vaultFacet.getVaultInformation(1)
             expect(vaultInfo[0]).to.equal("Quant Vault") // name
             expect(Number(vaultInfo[1])).to.equal(0) // totalSalt
             expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
@@ -409,7 +411,7 @@ describe("InitializationTest", async function () {
         })
 
         it("Confirm DCA Vault Information after salt deposits", async function () {
-            let vaultInfo = await vaultFacet.getVault(0)
+            let vaultInfo = await vaultFacet.getVaultInformation(0)
             expect(vaultInfo[0]).to.equal("DCA Vault") // name
             expect(Number(vaultInfo[1])).to.equal(totalSaltInDCAVault) // totalSalt
             expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
@@ -423,7 +425,7 @@ describe("InitializationTest", async function () {
         it("Confirm Quant Vault is still zero", async function () {
             await vaultFacet.addNewVault("Quant Vault", qauntWallet.address, quantApprovedControlWallet.address)
 
-            let vaultInfo = await vaultFacet.getVault(1)
+            let vaultInfo = await vaultFacet.getVaultInformation(1)
             expect(vaultInfo[0]).to.equal("Quant Vault") // name
             expect(Number(vaultInfo[1])).to.equal(0) // totalSalt
             expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
@@ -479,7 +481,7 @@ describe("InitializationTest", async function () {
         })
 
         it("Confirm DCA Vault Information after salt deposits", async function () {
-            let vaultInfo = await vaultFacet.getVault(0)
+            let vaultInfo = await vaultFacet.getVaultInformation(0)
             expect(vaultInfo[0]).to.equal("DCA Vault") // name
             expect(Number(vaultInfo[1])).to.equal(totalSaltInDCAVault) // totalSalt
             expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
@@ -490,10 +492,10 @@ describe("InitializationTest", async function () {
             expect(vaultInfo[7]).to.equal(dcaApprovedControlWallet.address) // approvedControlWallet
         })
 
-        it("Confirm Quant Vault is still zero", async function () {
+        it("Confirm Quant Vault Information after salt Deposits", async function () {
             await vaultFacet.addNewVault("Quant Vault", qauntWallet.address, quantApprovedControlWallet.address)
 
-            let vaultInfo = await vaultFacet.getVault(1)
+            let vaultInfo = await vaultFacet.getVaultInformation(1)
             expect(vaultInfo[0]).to.equal("Quant Vault") // name
             expect(Number(vaultInfo[1])).to.equal(totalSaltInQuantAVault) // totalSalt
             expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
@@ -504,4 +506,396 @@ describe("InitializationTest", async function () {
             expect(vaultInfo[7]).to.equal(quantApprovedControlWallet.address) // approvedControlWallet
         })
     })
+
+    describe("Confirm Vault Salt Deposits for each person", function () {
+        it("only p10 - p14 should have DCA salt deposits ", async function () {
+            let dcaVault = 0
+
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 1)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 2)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 3)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 4)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 5)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 6)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 51)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 52)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 53)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 54)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 55)).to.equal(0)
+        })
+
+        it("only p15 - p19 should have Quant salt deposits ", async function () {
+            let quantVault = 1
+
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 1)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 2)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 3)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 4)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 5)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 6)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 51)).to.equal(1356)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 52)).to.equal(1356)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 53)).to.equal(1356)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 54)).to.equal(1356)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 55)).to.equal(1356)
+            expect(await vaultFacet.getDepositedSaltAmount(quantVault, 56)).to.equal(0)
+        })
+    })
+
+    let beforeCoreTeamBalance: number = 0
+    let beforeVaultHoldingBalance: number = 0
+    let beforeTotalRewardBalance: number = 0
+    let beforeVaultCouncilBalance: number = 0
+    let beforeGemTokenChallangeBalance: number = 0
+    let beforeGemTokenSalesBalance: number = 0
+
+    let beforeDcaApprovedControlWalletBalance: number = 0
+    let beforeQuantApprovedControlWalletBalance: number = 0
+
+    let beforeDcaVaultBalance: number = 0
+    let beforeQuantVaultBalance: number = 0
+
+    let beforeDiamondContractBalance: number = 0
+    let beforeSaltVaultTokenContractBalance: number = 0
+    let beforeCoreTeamWalletBalance: number = 0
+    let beforeRoyaltiesWalletBalance: number = 0
+    let beforeProcurementWalletBalance: number = 0
+    let beforeGemTokenBurnWalletBalance: number = 0
+
+    let bankRewardsBalance_P10: number = 0
+    let bankRewardsBalance_P11: number = 0
+    let bankRewardsBalance_P12: number = 0
+    let bankRewardsBalance_P13: number = 0
+    let bankRewardsBalance_P14: number = 0
+    let bankRewardsBalance_P15: number = 0
+    let bankRewardsBalance_P16: number = 0
+    let bankRewardsBalance_P17: number = 0
+    let bankRewardsBalance_P18: number = 0
+    let bankRewardsBalance_P19: number = 0
+    let bankRewardsBalance_P20: number = 0
+    let bankRewardsBalance_coreTeam: number = 0
+
+    describe("Withdraw USDC from the DCA Vault", function () {
+        it("confirm balances before withdrawing DCA Vault", async function () {
+            console.log("mockedUSDC balance of saltVaultBulls:", await mockedUSDC.balanceOf(saltVaultBulls.target))
+            console.log("mockedUSDC balance of dimaond:", await mockedUSDC.balanceOf(diamondAddress))
+            console.log("mockedUSDC balance of ERC721Facet:", await mockedUSDC.balanceOf(erc721Facet.target))
+            console.log("mockedUSDC balance of DCA Vault:", await vaultFacet.getVaultWithdrawableAmount(0))
+            console.log("mockedUSDC balance of Quant Vault:", await vaultFacet.getVaultWithdrawableAmount(1))
+
+            beforeCoreTeamBalance = await infoGetterFacet.getCoreTeamBalance()
+            beforeVaultHoldingBalance = await infoGetterFacet.getVaultHoldingBalance()
+            beforeTotalRewardBalance = await infoGetterFacet.getTotalRewardBalance()
+            beforeVaultCouncilBalance = await infoGetterFacet.getVaultCouncilBalance()
+            beforeGemTokenChallangeBalance = await infoGetterFacet.getGemTokenChallengeBalance()
+            beforeGemTokenSalesBalance = await infoGetterFacet.getGemTokenSalesBalance()
+
+            beforeDcaVaultBalance = await vaultFacet.getVaultWithdrawableAmount(0)
+            beforeQuantVaultBalance = await vaultFacet.getVaultWithdrawableAmount(1)
+
+            beforeDcaApprovedControlWalletBalance = await mockedUSDC.balanceOf(dcaApprovedControlWallet.address)
+            beforeQuantApprovedControlWalletBalance = await mockedUSDC.balanceOf(quantApprovedControlWallet.address)
+
+            beforeDiamondContractBalance = await mockedUSDC.balanceOf(diamondAddress)
+            beforeSaltVaultTokenContractBalance = await mockedUSDC.balanceOf(saltVaultBulls.target)
+            beforeCoreTeamWalletBalance = await mockedUSDC.balanceOf(coreTeamWallet.address)
+            beforeRoyaltiesWalletBalance = await mockedUSDC.balanceOf(royaltiesWallet.address)
+            beforeProcurementWalletBalance = await mockedUSDC.balanceOf(procurementWallet.address)
+            beforeGemTokenBurnWalletBalance = await mockedUSDC.balanceOf(gemTokenBurnWallet.address)
+
+            bankRewardsBalance_P10 = await bankFacet.connect(signers[10]).getRewardsBalance()
+            bankRewardsBalance_P11 = await bankFacet.connect(signers[11]).getRewardsBalance()
+            bankRewardsBalance_P12 = await bankFacet.connect(signers[12]).getRewardsBalance()
+            bankRewardsBalance_P13 = await bankFacet.connect(signers[13]).getRewardsBalance()
+            bankRewardsBalance_P14 = await bankFacet.connect(signers[14]).getRewardsBalance()
+            bankRewardsBalance_P15 = await bankFacet.connect(signers[15]).getRewardsBalance()
+            bankRewardsBalance_P16 = await bankFacet.connect(signers[16]).getRewardsBalance()
+            bankRewardsBalance_P17 = await bankFacet.connect(signers[17]).getRewardsBalance()
+            bankRewardsBalance_P18 = await bankFacet.connect(signers[18]).getRewardsBalance()
+            bankRewardsBalance_P19 = await bankFacet.connect(signers[19]).getRewardsBalance()
+            bankRewardsBalance_P20 = await bankFacet.connect(signers[20]).getRewardsBalance()
+            bankRewardsBalance_coreTeam = await bankFacet.connect(coreTeamWallet).getRewardsBalance()
+
+            assert.equal(totalMintingCost, 2500 * 10 ** 6 * 5 + 1000 * 10 ** 6 * 5)
+            assert.equal(totalWithdrawableAmountForDCAVault, 2500 * 10 ** 6 * 5 * 0.9)
+            assert.equal(totalWithdrawableAmountForQuantVault, 1000 * 10 ** 6 * 5 * 0.9)
+
+            assert.equal(beforeCoreTeamBalance, totalMintingCost * 0.1)
+            assert.equal(beforeVaultHoldingBalance, totalMintingCost * 0.9)
+            assert.equal(beforeTotalRewardBalance, 0)
+            assert.equal(beforeVaultCouncilBalance, 0)
+            assert.equal(beforeGemTokenChallangeBalance, 0)
+            assert.equal(beforeGemTokenSalesBalance, 0)
+
+            assert.equal(beforeDcaVaultBalance, totalWithdrawableAmountForDCAVault)
+            assert.equal(beforeQuantVaultBalance, totalWithdrawableAmountForQuantVault)
+
+            assert.equal(beforeDcaApprovedControlWalletBalance, 0)
+            assert.equal(beforeQuantApprovedControlWalletBalance, 0)
+
+            assert.equal(beforeDiamondContractBalance, totalMintingCost)
+            assert.equal(beforeSaltVaultTokenContractBalance, 0)
+            assert.equal(beforeCoreTeamWalletBalance, 0)
+            assert.equal(beforeRoyaltiesWalletBalance, 0)
+            assert.equal(beforeProcurementWalletBalance, 0)
+            assert.equal(beforeGemTokenBurnWalletBalance, 0)
+
+            assert.equal(bankRewardsBalance_P10, 0)
+            assert.equal(bankRewardsBalance_P11, 0)
+            assert.equal(bankRewardsBalance_P12, 0)
+            assert.equal(bankRewardsBalance_P13, 0)
+            assert.equal(bankRewardsBalance_P14, 0)
+            assert.equal(bankRewardsBalance_P15, 0)
+            assert.equal(bankRewardsBalance_P16, 0)
+            assert.equal(bankRewardsBalance_P17, 0)
+            assert.equal(bankRewardsBalance_P18, 0)
+            assert.equal(bankRewardsBalance_P19, 0)
+            assert.equal(bankRewardsBalance_P20, 0)
+            assert.equal(bankRewardsBalance_coreTeam, 0)
+        })
+        it("revert when wrong wallet tries to withdraw the DCA vault", async function () {
+            let dcaVaultIndex = 0
+            await expect(vaultFacet.connect(signers[10]).withdrawVaultFunds(dcaVaultIndex)).to.revertedWith("must be the approved Control Wallet for this vault")
+        })
+
+        it("allow correct wallet to withdraw the DCA vault", async function () {
+            let dcaVaultIndex = 0
+            await vaultFacet.connect(dcaApprovedControlWallet).withdrawVaultFunds(dcaVaultIndex)
+        })
+
+        it("assert balances after DCA vault withdrawal", async function () {
+            beforeCoreTeamBalance = await infoGetterFacet.getCoreTeamBalance()
+            beforeVaultHoldingBalance = await infoGetterFacet.getVaultHoldingBalance()
+            beforeTotalRewardBalance = await infoGetterFacet.getTotalRewardBalance()
+            beforeVaultCouncilBalance = await infoGetterFacet.getVaultCouncilBalance()
+            beforeGemTokenChallangeBalance = await infoGetterFacet.getGemTokenChallengeBalance()
+            beforeGemTokenSalesBalance = await infoGetterFacet.getGemTokenSalesBalance()
+
+            beforeDcaVaultBalance = await vaultFacet.getVaultWithdrawableAmount(0)
+            beforeQuantVaultBalance = await vaultFacet.getVaultWithdrawableAmount(1)
+
+            beforeDcaApprovedControlWalletBalance = await mockedUSDC.balanceOf(dcaApprovedControlWallet.address)
+            beforeQuantApprovedControlWalletBalance = await mockedUSDC.balanceOf(quantApprovedControlWallet.address)
+
+            beforeDiamondContractBalance = await mockedUSDC.balanceOf(diamondAddress)
+            beforeSaltVaultTokenContractBalance = await mockedUSDC.balanceOf(saltVaultBulls.target)
+            beforeCoreTeamWalletBalance = await mockedUSDC.balanceOf(coreTeamWallet.address)
+            beforeRoyaltiesWalletBalance = await mockedUSDC.balanceOf(royaltiesWallet.address)
+            beforeProcurementWalletBalance = await mockedUSDC.balanceOf(procurementWallet.address)
+            beforeGemTokenBurnWalletBalance = await mockedUSDC.balanceOf(gemTokenBurnWallet.address)
+
+            bankRewardsBalance_P10 = await bankFacet.connect(signers[10]).getRewardsBalance()
+            bankRewardsBalance_P11 = await bankFacet.connect(signers[11]).getRewardsBalance()
+            bankRewardsBalance_P12 = await bankFacet.connect(signers[12]).getRewardsBalance()
+            bankRewardsBalance_P13 = await bankFacet.connect(signers[13]).getRewardsBalance()
+            bankRewardsBalance_P14 = await bankFacet.connect(signers[14]).getRewardsBalance()
+            bankRewardsBalance_P15 = await bankFacet.connect(signers[15]).getRewardsBalance()
+            bankRewardsBalance_P16 = await bankFacet.connect(signers[16]).getRewardsBalance()
+            bankRewardsBalance_P17 = await bankFacet.connect(signers[17]).getRewardsBalance()
+            bankRewardsBalance_P18 = await bankFacet.connect(signers[18]).getRewardsBalance()
+            bankRewardsBalance_P19 = await bankFacet.connect(signers[19]).getRewardsBalance()
+            bankRewardsBalance_P20 = await bankFacet.connect(signers[20]).getRewardsBalance()
+            bankRewardsBalance_coreTeam = await bankFacet.connect(coreTeamWallet).getRewardsBalance()
+
+            assert.equal(totalMintingCost, 2500 * 10 ** 6 * 5 + 1000 * 10 ** 6 * 5)
+            assert.equal(totalWithdrawableAmountForDCAVault, 2500 * 10 ** 6 * 5 * 0.9)
+            assert.equal(totalWithdrawableAmountForQuantVault, 1000 * 10 ** 6 * 5 * 0.9)
+
+            assert.equal(beforeCoreTeamBalance, totalMintingCost * 0.1)
+            assert.equal(beforeVaultHoldingBalance, totalMintingCost * 0.9 - totalWithdrawableAmountForDCAVault)
+            assert.equal(beforeTotalRewardBalance, 0)
+            assert.equal(beforeVaultCouncilBalance, 0)
+            assert.equal(beforeGemTokenChallangeBalance, 0)
+            assert.equal(beforeGemTokenSalesBalance, 0)
+
+            assert.equal(beforeDcaVaultBalance, 0)
+            assert.equal(beforeQuantVaultBalance, totalWithdrawableAmountForQuantVault)
+
+            assert.equal(beforeDcaApprovedControlWalletBalance, totalWithdrawableAmountForDCAVault)
+            assert.equal(beforeQuantApprovedControlWalletBalance, 0)
+
+            assert.equal(beforeDiamondContractBalance, totalMintingCost - totalWithdrawableAmountForDCAVault)
+            assert.equal(beforeSaltVaultTokenContractBalance, 0)
+            assert.equal(beforeCoreTeamWalletBalance, 0)
+            assert.equal(beforeRoyaltiesWalletBalance, 0)
+            assert.equal(beforeProcurementWalletBalance, 0)
+            assert.equal(beforeGemTokenBurnWalletBalance, 0)
+
+            assert.equal(bankRewardsBalance_P10, 0)
+            assert.equal(bankRewardsBalance_P11, 0)
+            assert.equal(bankRewardsBalance_P12, 0)
+            assert.equal(bankRewardsBalance_P13, 0)
+            assert.equal(bankRewardsBalance_P14, 0)
+            assert.equal(bankRewardsBalance_P15, 0)
+            assert.equal(bankRewardsBalance_P16, 0)
+            assert.equal(bankRewardsBalance_P17, 0)
+            assert.equal(bankRewardsBalance_P18, 0)
+            assert.equal(bankRewardsBalance_P19, 0)
+            assert.equal(bankRewardsBalance_P20, 0)
+            assert.equal(bankRewardsBalance_coreTeam, 0)
+        })
+    })
+
+    describe("Mocked sending funds to binance account and getting $1000 back", function () {
+        it("send all funds from wallet to mockedBinance account and get 1K back", async function () {
+            let balanceToSend = await mockedUSDC.balanceOf(dcaApprovedControlWallet)
+
+            await mockedUSDC.connect(dcaApprovedControlWallet).transfer(mockedBinanceAccount, balanceToSend)
+
+            expect(await mockedUSDC.balanceOf(dcaApprovedControlWallet)).to.equal(0)
+
+            await mockedUSDC.connect(mockedBinanceAccount).transfer(dcaApprovedControlWallet, 1000 * 10 ** 6)
+
+            expect(await mockedUSDC.balanceOf(dcaApprovedControlWallet)).to.equal(1000 * 10 ** 6)
+        })
+    })
+
+    describe("Set p12 to compound all of their DCA vault rewards", function () {
+        it("confirm all compounding rates for DCA vault are set to zero by default", async function () {
+            let dcaVaultIndex = 0
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 1)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 2)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 3)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 4)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 5)).to.equal(0)
+        })
+
+        it("let owner of infdex 3 set compounding rate for DCA vault to 100%", async function () {
+            expect(await saltVaultBulls.ownerOf(3)).to.equal(signers[12].address)
+
+            let dcaVaultIndex = 0
+            await vaultFacet.connect(signers[12]).setVaultCompoundingRate(dcaVaultIndex, 3, 100)
+        })
+
+        it("confirm compounding rates are correct now after index 3 is set to 100", async function () {
+            let dcaVaultIndex = 0
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 1)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 2)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 3)).to.equal(100)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 4)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVaultIndex, 5)).to.equal(0)
+        })
+    })
+
+    describe(" Confirm Vault information is correct before rewarding", function () {
+        let dcaVault = 0
+
+        it("confirm compounding rates are correct now after index 3 is set to 100", async function () {
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 1)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 2)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 3)).to.equal(100)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 4)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 5)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 6)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 51)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 52)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 53)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 54)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 55)).to.equal(0)
+            expect(await vaultFacet.getNftVaultCompoundingRate(dcaVault, 56)).to.equal(0)
+        })
+        it("confirm salt deposit amounts", async function () {
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 1)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 2)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 3)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 4)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 5)).to.equal(3427)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 6)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 51)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 52)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 53)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 54)).to.equal(0)
+            expect(await vaultFacet.getDepositedSaltAmount(dcaVault, 55)).to.equal(0)
+        })
+
+        it("confirm salt deposit amounts", async function () {
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 1)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 2)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 3)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 4)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 5)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 6)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 51)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 52)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 53)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 54)).to.equal(0)
+            expect(await vaultFacet.getNftRewardPoints(dcaVault, 55)).to.equal(0)
+        })
+
+        it("confirm getContinuousMonthsCompounding", async function () {
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 1)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 2)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 3)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 4)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 5)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 6)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 51)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 52)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 53)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 54)).to.equal(0)
+            expect(await vaultFacet.getContinuousMonthsCompounding(dcaVault, 55)).to.equal(0)
+        })
+
+        it("confirm getBonusEligibilityForVaultDeposit", async function () {
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 1)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 2)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 3)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 4)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 5)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 6)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 51)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 52)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 53)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 54)).to.equal(false)
+            expect(await vaultFacet.getBonusEligibilityForVaultDeposit(dcaVault, 55)).to.equal(false)
+        })
+
+        it("Confirm DCA Vault Information", async function () {
+            let vaultInfo = await vaultFacet.getVaultInformation(0)
+            expect(vaultInfo[0]).to.equal("DCA Vault") // name
+            expect(Number(vaultInfo[1])).to.equal(totalSaltInDCAVault) // totalSalt
+            expect(Number(vaultInfo[2])).to.equal(0) // totalRewardPoints
+            expect(Number(vaultInfo[3])).to.equal(0) // withdrawableAmount
+            expect(Number(vaultInfo[4])).to.equal(0) // dispersableProfitAmount
+            expect(Number(vaultInfo[5])).to.equal(0) // lifetimeRewardAmount
+            expect(vaultInfo[6]).to.equal(dcaWallet.address) // walletAddress
+            expect(vaultInfo[7]).to.equal(dcaApprovedControlWallet.address) // approvedControlWallet
+        })
+    })
+
+    describe("Reward DCA Vault with $1000 USDC", function () {
+        let dcaVault = 0
+        it("confirm it reverts if the wrong wallet deposits into the vault", async function () {
+            await expect(vaultFacet.connect(quantApprovedControlWallet).depositProfitsAndcalculateVaultRewardPoints(dcaVault, 1000 * 10 ** 6)).to.revertedWith("must be the approved vault wallet")
+        })
+
+        let beforeDiamondBalance: number = 0
+
+        it("confirm it reverts if the wrong wallet deposits into the vault", async function () {
+            expect(await mockedUSDC.balanceOf(dcaApprovedControlWallet)).to.equal(1000 * 10 ** 6)
+
+            beforeDiamondBalance = await mockedUSDC.balanceOf(diamondAddress)
+
+            await mockedUSDC.connect(dcaApprovedControlWallet).approve(diamondAddress, 1000 * 10 ** 6)
+
+            await vaultFacet.connect(dcaApprovedControlWallet).depositProfitsAndcalculateVaultRewardPoints(dcaVault, 1000 * 10 ** 6)
+
+            // let afterDepsoitBalance = await mockedUSDC.balanceOf(diamondAddress)
+
+            // assert.equal(afterDepsoitBalance, beforeDiamondBalance + 1000 * 10 ** 6)
+            // expect(await mockedUSDC.balanceOf(dcaApprovedControlWallet)).to.equal(0)
+        })
+    })
 })
+
+// TODO make sure this emits the right message
+
+// make sure vault information is updated. 
+
+
+// make sure pionts are correct before rewarding
+
+// make sure index 3 got a continous point 
+
+
+..

@@ -48,8 +48,9 @@ contract InfoGetterFacet  {
         return s.gemTokenChallangeBalance;
     }
 
-
-
+    function getGemTokenSalesBalance() external view returns (uint256) {
+        return s.gemTokenSalesBalance;
+    }
 
 
 
