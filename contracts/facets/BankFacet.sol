@@ -15,7 +15,7 @@ contract BankFacet {
     AppStorage internal s;
 
 
-    function getRewardsBalance() external view returns(uint256) {
+    function getBankRewardsBalance() external view returns(uint256) {
         return s.bankRewardBalance[msg.sender];
     }
 

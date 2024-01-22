@@ -26,6 +26,14 @@ contract InfoGetterFacet  {
     }
 
 
+    // global reward total 
+
+    function getGlobalRewardTotal() external view returns (uint256) {
+        return s.globalPayoutAmount;
+    }
+
+
+
     // Balances
 
     function getCoreTeamBalance() external view returns (uint256) {

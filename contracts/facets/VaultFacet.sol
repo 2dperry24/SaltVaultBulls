@@ -23,9 +23,9 @@ contract VaultFacet {
 
     event CompoundingRateUpdated(uint256 indexed tokenId, uint256 indexed vaultId, uint256 compoundingRate);
 
-    event VaultRewardPointsCalculated(uint256 indexed vaultIndex, uint256 totalRewardPoints, uint256 profitAmount);
+    event VaultRewardPointsCalculated(uint256 indexed vaultIndex, uint256 totalRewardPoints, uint256 coreTeamAmount, uint256 profitAmount);
 
-    event ProfitsDepositedToVault(uint256 indexed vaultIndex, uint256 startIndex, uint256 endIndex);
+    event ProfitsDispersedToHolders(uint256 indexed vaultIndex, uint256 startIndex, uint256 endIndex);
 
 
 
@@ -109,6 +109,10 @@ contract VaultFacet {
         uint256 withdrawableAmount = saltValue * 90 / 100;
         vault.withdrawableAmount += withdrawableAmount;
 
+        // Deduct the amount added from the vaultHoldingBalance
+        s.vaultHoldingBalance -= withdrawableAmount;
+
+
         // change flag
         s.allocateSaltToVaultReentrancyFlag = 0;
 
@@ -149,9 +153,17 @@ contract VaultFacet {
         // Transfer the profit amount into the contract
         IERC20(s.usdcTokenContract).safeTransferFrom(msg.sender, address(this), profitAmount);
 
-        vault.disperableProfitAmount += profitAmount;
-        vault.lifetimeRewardAmount += profitAmount; 
-        s.globalPayoutAmount += profitAmount; 
+
+        // take 10% for salary updates for coreteam
+        uint256 coreTeamAmount = profitAmount * 1 / 10;
+        uint256 profitToDistributeAmount = profitAmount - coreTeamAmount;
+
+        // udpate coreteam balance 
+        s.coreTeamBalance += coreTeamAmount;
+
+        vault.disperableProfitAmount += profitToDistributeAmount;
+        vault.lifetimeRewardAmount += profitToDistributeAmount; 
+        s.globalPayoutAmount += profitToDistributeAmount; 
 
         uint256 totalRewardPoints;
         for (uint256 i = 0; i < s.erc721allTokens[s.bullsExternalContractAddress].length; i++) {
@@ -170,8 +182,9 @@ contract VaultFacet {
         vault.totalRewardPoints = totalRewardPoints;
 
         // Emit the event with the profit amount
-        emit VaultRewardPointsCalculated(vaultIndex, totalRewardPoints, profitAmount);
+        emit VaultRewardPointsCalculated(vaultIndex, totalRewardPoints, coreTeamAmount, profitToDistributeAmount);
     }
+
 
 
 
@@ -205,7 +218,13 @@ contract VaultFacet {
                 uint256 amountToReward = nftProfitShare - amountToCompound;
 
                 if (compoundingRate == 100) {
+
+                    console.log("^^^^^^^^^^^^^^^ index ^^^^^^^^^^^^^^^", tokenId);
+
+                    console.log("^^^^^^^^^^^^^^^ continous months count before ^^^^^^^^^^^^^^^", vault.continuousMonthsCompounding[tokenId]);
                     vault.continuousMonthsCompounding[tokenId]++;
+
+                    console.log("^^^^^^^^^^^^^^^ continous months count after ^^^^^^^^^^^^^^^", vault.continuousMonthsCompounding[tokenId]);
                     if (vault.continuousMonthsCompounding[tokenId] > 4) {
                         vault.bonusEligibleForVaultDeposit[tokenId] = true;
                     }
@@ -213,11 +232,17 @@ contract VaultFacet {
 
                 // Compounding: Buy salt grains and add to the vault
                 if (amountToCompound > 0) {
-                    uint256 saltGrainsToBuy = amountToCompound / (80 * 10 ** 6); // Assuming price per grain
+    
+                    uint256 saltGrainsToBuy = amountToCompound / 800000; // 800000 represents the cost of one salt grain, $0.80, in the smallest units
                     uint256 saltGrainsWithBonus = saltGrainsToBuy + _calculateBonusAmount(saltGrainsToBuy);
+
                     vault.totalSalt += saltGrainsWithBonus;
                     vault.depositedSaltAmount[tokenId] += saltGrainsWithBonus;
                     disperableProfitAmount -= amountToCompound;
+
+                    // add amountToCompound back to the vaults withdrawableAmount 
+                    vault.withdrawableAmount += amountToCompound;
+
                 }
 
                 // Reward: Credit the owner's balance
@@ -248,7 +273,7 @@ contract VaultFacet {
         vault.disperableProfitAmount = 0;
 
         // Emit the event with the details
-        emit ProfitsDepositedToVault(vaultIndex, startIndex, endIndex);
+        emit ProfitsDispersedToHolders(vaultIndex, startIndex, endIndex);
     }
 
 
@@ -265,39 +290,17 @@ contract VaultFacet {
 
     }
 
+
     function getVaultCount() public view returns (uint256){
-
         return s.vaults.length;
-
     }
 
 
- 
     function checkVaultCompoudingRate(uint256 _rate) public view returns (bool){
-
         return s.allowedCompoundingRates[_rate];
-
     }
 
 
- 
-
-
-
-    // function setCompoundingRate(uint256 tokenId, uint256 vaultId, uint256 compoundingRate) external {
-
-    //     // Ensure the caller owns the NFT
-    //     if(s.erc721owners[s.bullsExternalContractAddress][tokenId] != msg.sender) {revert("You do not own this Bull");}
-    
-    //     // Check if the provided rate is allowed
-    //     if (s.allowedCompoundingRates[compoundingRate] ) { revert("Must be an approved Compounding Rate, e.g Divisible by 10");}
-        
-    //     // Update the NFT's compounding rate in the vault
-    //     s.vaults.nftVaultCompoundingRate[vaultId][tokenId] = compoundingRate;
-
-    //     // Emit an event (optional, but good practice)
-    //     emit CompoundingRateUpdated(tokenId, vaultId, compoundingRate);
-    // }
     function getVaultWithdrawableAmount(uint256 vaultId) public view returns (uint256) {
         return s.vaults[vaultId].withdrawableAmount;
     }
@@ -395,9 +398,6 @@ contract VaultFacet {
 
         // reset the vaults withdrawableAmount 
         s.vaults[vaultIndex].withdrawableAmount = 0; 
-
-        // deduct the amount from the VaultsHoldingAmount
-        s.vaultHoldingBalance -= balanceToWithdraw;
 
     }
 
