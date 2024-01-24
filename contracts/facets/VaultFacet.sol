@@ -27,10 +27,10 @@ contract VaultFacet {
 
     event ProfitsDispersedToHolders(uint256 indexed vaultIndex, uint256 startIndex, uint256 endIndex);
 
-
-
     event SaltAllocatedToVault(uint256 indexed tokenId, uint256 indexed vaultIndex, uint256 totalGrains, uint256 saltValue, uint256 grains, uint256 pillars, uint256 sheets, uint256 cubes);
 
+    event FundsWithdrawn(uint256 indexed vaultIndex, address indexed controlWallet, uint256 amount);
+    event UnauthorizedAccessAttempt(address indexed sender, uint256 indexed vaultIndex);
 
     // Send Salt to Vaults 
     function allocateSaltToVault(uint256 tokenId, uint256 vaultIndex, uint256 grains, uint256 pillars, uint256 sheets, uint256 cubes) public  {
@@ -194,10 +194,12 @@ contract VaultFacet {
 
         if(msg.sender != vault.approvedControlWallet){revert("must be the approved vault wallet");}
 
+        bool resetVaultFlag = false; 
 
         if (endIndex <= startIndex) { revert("start is larger than end");}
         if (endIndex > s.erc721allTokens[s.bullsExternalContractAddress].length) { 
             endIndex = s.erc721allTokens[s.bullsExternalContractAddress].length;
+            resetVaultFlag = true;
         }
 
         if(msg.sender != vault.approvedControlWallet){revert("must be an approved wallet");}
@@ -206,7 +208,12 @@ contract VaultFacet {
         if (vault.totalRewardPoints == 0) { revert("totalRewardPoints is not set yet");}
 
 
-        uint256 disperableProfitAmount = vault.disperableProfitAmount; 
+        uint256 disperableProfitAmount = vault.disperableProfitAmount;
+
+
+        // console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+        // console.log("^^^^^^^^^^ disperableProfitAmount: ^^^^^^^^^^^^", disperableProfitAmount); 
+        // console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 
         for (uint256 tokenId = startIndex; tokenId <= endIndex; tokenId++) {  
             if (vault.depositedSaltAmount[tokenId] > 0) {
@@ -217,18 +224,23 @@ contract VaultFacet {
                 uint256 amountToCompound = (nftProfitShare * compoundingRate) / 100;
                 uint256 amountToReward = nftProfitShare - amountToCompound;
 
+
+                // console.log("^^^^^^^^^^ index: ^^^^^^^^^^^^", tokenId);
+                // console.log("^^^^^^^^^^ nftRewardPoints: ^^^^^^^^^^^^", vault.nftRewardPoints[tokenId]); 
+                // console.log("^^^^^^^^^^ nftProfitShare: ^^^^^^^^^^^^", nftProfitShare); 
+                // console.log("^^^^^^^^^^ amountToReward: ^^^^^^^^^^^^", amountToReward);
+
+ 
                 if (compoundingRate == 100) {
 
-                    console.log("^^^^^^^^^^^^^^^ index ^^^^^^^^^^^^^^^", tokenId);
-
-                    console.log("^^^^^^^^^^^^^^^ continous months count before ^^^^^^^^^^^^^^^", vault.continuousMonthsCompounding[tokenId]);
+                    // s.continuousMonthsCompounding[vaultIndex][tokenId]++;
                     vault.continuousMonthsCompounding[tokenId]++;
 
-                    console.log("^^^^^^^^^^^^^^^ continous months count after ^^^^^^^^^^^^^^^", vault.continuousMonthsCompounding[tokenId]);
                     if (vault.continuousMonthsCompounding[tokenId] > 4) {
                         vault.bonusEligibleForVaultDeposit[tokenId] = true;
                     }
                 }
+
 
                 // Compounding: Buy salt grains and add to the vault
                 if (amountToCompound > 0) {
@@ -269,8 +281,22 @@ contract VaultFacet {
             }
         }
 
-        // Final reset of dispersible profits for this vault
-        vault.disperableProfitAmount = 0;
+
+
+        // reset the vaults information and store data when targeting the last index via 99999 as the last index
+        if (resetVaultFlag){
+
+            // reset and snapshot the totalPoints for this vault
+            s.totalVaultRewardPointsForCycle[vaultIndex].push(vault.totalRewardPoints);
+            vault.totalRewardPoints = 0;
+
+            // reset and snapshot the deposited Amount that has been dispersed
+            s.totalVaultProfitForCycle[vaultIndex].push(vault.disperableProfitAmount);
+            vault.disperableProfitAmount = 0;
+
+
+        }
+     
 
         // Emit the event with the details
         emit ProfitsDispersedToHolders(vaultIndex, startIndex, endIndex);
@@ -296,7 +322,7 @@ contract VaultFacet {
     }
 
 
-    function checkVaultCompoudingRate(uint256 _rate) public view returns (bool){
+    function checkVaultCompoundingRate(uint256 _rate) public view returns (bool){
         return s.allowedCompoundingRates[_rate];
     }
 
@@ -304,26 +330,6 @@ contract VaultFacet {
     function getVaultWithdrawableAmount(uint256 vaultId) public view returns (uint256) {
         return s.vaults[vaultId].withdrawableAmount;
     }
-
-
-    function getCompoundingRateForIndex(uint256 tokenId, uint256 vaultId) public view returns (uint256) {
-        return s.vaults[vaultId].nftVaultCompoundingRate[tokenId];
-    }
-
-
-    function getDepositedSaltForIndex(uint256 tokenId, uint256 vaultId) public view returns (uint256) {
-        return s.vaults[vaultId].depositedSaltAmount[tokenId];
-    }
-
-
-    function getContinousMonthsCompoundingForIndex(uint256 tokenId, uint256 vaultId) public view returns (uint256) {
-        return s.vaults[vaultId].continuousMonthsCompounding[tokenId];
-    }
-
-    function getIsIndexEligibleForBonusDuringSaltDeposit(uint256 tokenId, uint256 vaultId) public view returns (bool) {
-        return s.vaults[vaultId].bonusEligibleForVaultDeposit[tokenId];
-    }
-
 
 
     // Getter for the basic properties of a Vault
@@ -356,6 +362,8 @@ contract VaultFacet {
 
     function getContinuousMonthsCompounding(uint256 vaultId, uint256 nftId) public view returns (uint256) {
         return s.vaults[vaultId].continuousMonthsCompounding[nftId];
+
+        // return s.continuousMonthsCompounding[vaultId][nftId];
     }
 
     function getBonusEligibilityForVaultDeposit(uint256 vaultId, uint256 nftId) public view returns (bool) {
@@ -363,6 +371,30 @@ contract VaultFacet {
     }
 
 
+    // Getter function to retrieve a specific reward point value 
+    function getRewardPointsArrayForVault(uint256 vaultIndex) public view returns (uint256[] memory ) {
+
+        return s.totalVaultRewardPointsForCycle[vaultIndex];
+    }
+
+    // Optionally, a function to get the total number of reward points recorded for a specific vaultIndex
+    function getTotalRewardPointsLength(uint256 vaultIndex) public view returns (uint256) {
+        return s.totalVaultRewardPointsForCycle[vaultIndex].length;
+    }
+
+
+    // Getter function to retrieve a specific reward point value 
+    function getDepositedProfitArrayForVault(uint256 vaultIndex) public view returns (uint256[] memory ) {
+
+        return s.totalVaultProfitForCycle[vaultIndex];
+    }
+
+    // Optionally, a function to get the total number of reward points recorded for a specific vaultIndex
+    function getDepositedProfitArrayLength(uint256 vaultIndex) public view returns (uint256) {
+        return s.totalVaultProfitForCycle[vaultIndex].length;
+    }
+
+    
 
 
     function setVaultCompoundingRate(uint256 vaultId, uint256 tokenId, uint256 compoundingRate) external {
@@ -382,23 +414,25 @@ contract VaultFacet {
 
 
 
-
-
-
-
     function withdrawVaultFunds(uint256 vaultIndex) external {
 
         Vault storage vault = s.vaults[vaultIndex];
 
-        if(msg.sender != vault.approvedControlWallet){revert("must be the approved Control Wallet for this vault");}
+        if(msg.sender != vault.approvedControlWallet){
+            emit UnauthorizedAccessAttempt(msg.sender, vaultIndex);
+            revert("must be the approved Control Wallet for this vault");
+        }
 
         uint256 balanceToWithdraw = s.vaults[vaultIndex].withdrawableAmount;
-       
+    
         IERC20(s.usdcTokenContract).safeTransfer(vault.approvedControlWallet, balanceToWithdraw);
+
+        // Emit an event after successful withdrawal
+        emit FundsWithdrawn(vaultIndex, vault.approvedControlWallet, balanceToWithdraw);
 
         // reset the vaults withdrawableAmount 
         s.vaults[vaultIndex].withdrawableAmount = 0; 
-
     }
+
 
 }

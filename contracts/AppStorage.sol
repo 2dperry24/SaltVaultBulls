@@ -183,7 +183,10 @@ struct AppStorage {
 
     Vault[] vaults;
     mapping(uint256 => bool) allowedCompoundingRates;
-  
+
+    mapping(uint256 => uint256[]) totalVaultRewardPointsForCycle;  // Keeps track of total reward points for each cycle as a receipt   
+
+    mapping(uint256 => uint256[]) totalVaultProfitForCycle;  // Keeps track of profits deposited in the vault over time as a receipt   
     
     // ========== Vault Council ========== //
     uint256 vaultCouncilCount;
@@ -199,22 +202,6 @@ struct AppStorage {
 
     StartupBonus bonusDetails;
 
- 
-    // ======== ERC20 information ===========
-
-    //names
-    mapping(address => string) erc20name;
-    mapping(address => string) erc20symbol;
-    mapping(address => uint8) erc20decimals;
-    mapping(address => mapping(address => uint256)) erc20balance;
-    mapping(address => mapping(address => mapping(address => uint256))) erc20allowances;
-    mapping(address => uint256) erc20totalSupply;
-    
-
-
-
-
-    
     // ======== ERC721 NFT information ===========
 
     // has the contract been initialized
