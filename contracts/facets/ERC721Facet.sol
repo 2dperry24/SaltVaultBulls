@@ -50,6 +50,10 @@ contract ERC721Facet is IERC721Facet {
     event USDCMint(address indexed minter, uint256 quantity, uint256 totalCost);
     event WinnerDeclared(address winner, uint256 totalValue);
 
+    event BattleStonesMinted(address indexed account, uint256 totalMints, uint256 totalCost);
+    event BattleShieldsMinted(address indexed account, uint256 totalMints, uint256 totalCost);
+    event LuckTokensMinted(address indexed account, uint256 totalMints, uint256 totalCost);
+
 
     /*
     IERC721Facet interface implementation
@@ -746,8 +750,6 @@ contract ERC721Facet is IERC721Facet {
 
 
 
-
-
     /**
      * @dev Return bool to see if external contract is allowed to call Minting Bulls
     */
@@ -756,7 +758,9 @@ contract ERC721Facet is IERC721Facet {
     }
 
 
-
+    /////////////////////
+    //////// Bulls //////
+    /////////////////////
 
     function mintBull(uint256 rarity, address _addressToMintTo) external {
 
@@ -851,6 +855,11 @@ contract ERC721Facet is IERC721Facet {
 
 
 
+    //////////////////////////
+    //////// Gem Tokens //////
+    //////////////////////////
+
+
     function erc721mintGemTokens(address _addressToMintTo, uint256 _quantity, uint256 _totalCost) external {
 
         require(s.erc721authorizedExternalContracts[msg.sender], "Not an approved external contract");
@@ -901,4 +910,185 @@ contract ERC721Facet is IERC721Facet {
     
         }
     }
+
+
+
+    ///////////////////////////////
+    //////// Defend The Mine //////
+    ///////////////////////////////
+
+
+    function erc721mintBattleStones(address _addressToMintTo, uint256 _quantity, uint256 _totalCost) external {
+
+        require(s.erc721authorizedExternalContracts[msg.sender], "Not an approved external contract");
+
+        // get current index
+        uint256 currentCount = s.battleStoneCurrentIndex;
+
+        require(currentCount <= s.battleStoneTotalSupply, "No more Battle Shields to Mint");
+
+        require(_addressToMintTo != address(0), "ERC721: mint to the zero address");
+        
+        for (uint256 i = 0; i < _quantity; i++) {
+
+            uint256 indexToMint = s.shuffledBattleStoneIndices[s.battleStoneCurrentIndex];
+            if(_erc721exists(indexToMint)) {revert("ERC721: token already minted");}
+
+            // update enumerable information
+            LibERC721.beforeTokenTransfer(msg.sender, address(0), _addressToMintTo, indexToMint, 1);
+            
+            // mint to the _addressToMintTo in the msg.sender collection
+            s.erc721balances[msg.sender][_addressToMintTo] += 1; 
+            s.erc721owners[msg.sender][indexToMint] = _addressToMintTo; 
+            s.battleStoneCurrentIndex++;
+        }
+
+    
+        // Update contract balances
+        uint256 splitCost = _totalCost / 2;
+
+        s.coreTeamBalance += splitCost; 
+        s.defenseTokenSalesBalance += _totalCost - splitCost;
+
+        emit BattleStonesMinted(_addressToMintTo, _quantity, _totalCost);
+    }
+
+
+
+
+    function erc721mintBattleShields(address _addressToMintTo, uint256 _quantity, uint256 _totalCost) external {
+
+        require(s.erc721authorizedExternalContracts[msg.sender], "Not an approved external contract");
+
+        // get current index
+        uint256 currentCount = s.battleShieldCurrentIndex;
+
+        require(currentCount <= s.battleShieldTotalSupply, "No more Battle Stones to Mint");
+
+        require(_addressToMintTo != address(0), "ERC721: mint to the zero address");
+        
+        for (uint256 i = 0; i < _quantity; i++) {
+
+            uint256 indexToMint = s.shuffledBattleShieldIndices[s.battleShieldCurrentIndex];
+            if(_erc721exists(indexToMint)) {revert("ERC721: token already minted");}
+
+            // update enumerable information
+            LibERC721.beforeTokenTransfer(msg.sender, address(0), _addressToMintTo, indexToMint, 1);
+            
+            // mint to the _addressToMintTo in the msg.sender collection
+            s.erc721balances[msg.sender][_addressToMintTo] += 1; 
+            s.erc721owners[msg.sender][indexToMint] = _addressToMintTo; 
+            s.battleShieldCurrentIndex++;
+        }
+
+    
+        // Update contract balances
+        uint256 splitCost = _totalCost / 2;
+
+        s.coreTeamBalance += splitCost; 
+        s.defenseTokenSalesBalance += _totalCost - splitCost;
+
+        emit BattleShieldsMinted(_addressToMintTo, _quantity, _totalCost);
+    }
+
+
+
+
+    function erc721mintLuckTokens(address _addressToMintTo, uint256 _quantity, uint256 _totalCost) external {
+
+        require(s.erc721authorizedExternalContracts[msg.sender], "Not an approved external contract");
+
+        // get current index
+        uint256 currentCount = s.luckTokenCurrentIndex;
+
+        require(currentCount <= s.luckTokenTotalSupply, "No more Battle Stones to Mint");
+
+        require(_addressToMintTo != address(0), "ERC721: mint to the zero address");
+        
+        for (uint256 i = 0; i < _quantity; i++) {
+
+            uint256 indexToMint = s.shuffledLuckTokenIndices[s.luckTokenCurrentIndex];
+            if(_erc721exists(indexToMint)) {revert("ERC721: token already minted");}
+
+            // update enumerable information
+            LibERC721.beforeTokenTransfer(msg.sender, address(0), _addressToMintTo, indexToMint, 1);
+            
+            // mint to the _addressToMintTo in the msg.sender collection
+            s.erc721balances[msg.sender][_addressToMintTo] += 1; 
+            s.erc721owners[msg.sender][indexToMint] = _addressToMintTo; 
+            s.luckTokenCurrentIndex++;
+        }
+
+    
+        // Update contract balances
+        uint256 splitCost = _totalCost / 2;
+
+        s.coreTeamBalance += splitCost; 
+        s.defenseTokenSalesBalance += _totalCost - splitCost;
+
+        emit LuckTokensMinted(_addressToMintTo, _quantity, _totalCost);
+    }
+
+
+
+
+
+    /**
+     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
+    */
+    function getCostAndMintEligibilityBattleStones(uint256 _quanity) external view returns (uint256) {
+
+        if (s.battleStoneCurrentIndex + _quanity  > s.battleStoneTotalSupply) {
+            return 0;
+        }
+
+        if (!s.erc721mintingLive[msg.sender]) {  
+            return 0;
+        }
+
+        uint256 transactionCost = s.defenseTokenMintCost * _quanity;
+        return transactionCost;
+    }
+
+
+
+
+    /**
+     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
+    */
+    function getCostAndMintEligibilityBattleShields(uint256 _quanity) external view returns (uint256) {
+
+        if (s.battleShieldCurrentIndex + _quanity  > s.battleShieldTotalSupply) {
+            return 0;
+        }
+
+        if (!s.erc721mintingLive[msg.sender]) {  
+            return 0;
+        }
+
+        uint256 transactionCost = s.defenseTokenMintCost * _quanity;
+        return transactionCost;
+    }
+
+
+
+
+    /**
+     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
+    */
+    function getCostAndMintEligibilityLuckTokens(uint256 _quanity) external view returns (uint256) {
+
+        if (s.luckTokenCurrentIndex + _quanity  > s.luckTokenTotalSupply) {
+            return 0;
+        }
+
+        if (!s.erc721mintingLive[msg.sender]) {  
+            return 0;
+        }
+
+        uint256 transactionCost = s.defenseTokenMintCost * _quanity;
+        return transactionCost;
+    }
+
+
 }

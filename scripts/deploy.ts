@@ -39,6 +39,7 @@ export async function deploy() {
         "BankFacet",
         "VaultFacet",
         "VaultCouncilFacet",
+        "DefenseFacet",
     ]
     const cut = []
     for (const FacetName of FacetNames) {

@@ -19,7 +19,6 @@ contract BankFacet {
         return s.bankRewardBalance[msg.sender];
     }
 
-    
 }
 
 

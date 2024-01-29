@@ -770,7 +770,4 @@ describe("InitializationTest", async function () {
             expect(Number(vaultHoldingBalance)).to.equal(2500 * 10 ** 6 * 0.9)
         })
     })
-
-  
-    })
 })

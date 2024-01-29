@@ -60,6 +60,11 @@ contract InfoGetterFacet  {
         return s.gemTokenSalesBalance;
     }
 
+    function getDefenseTokenSalesBalance() external view returns (uint256) {
+        return s.defenseTokenSalesBalance;
+    }
+
+
 
 
     function getMintCost(uint256 rarity) external view returns (uint256) {

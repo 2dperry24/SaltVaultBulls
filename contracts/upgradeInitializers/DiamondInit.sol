@@ -131,9 +131,6 @@ contract DiamondInit {
             s.allowedCompoundingRates[i * 10] = true; // 0, 10, 20, ..., 100
         }
 
-
-
-
         // Salt Repository
         s.grainCost = 1 * 10 ** 6;
         s.pillarCost = 9 * 10 ** 6;
@@ -157,6 +154,11 @@ contract DiamondInit {
         s.gemTokenTotalSupply = 10000;
 
 
+        // Defense Tokens
+        s.defenseTokenMintCost = 15 * 10 ** 6; 
+        s.battleStoneTotalSupply = 3000;
+        s.battleShieldTotalSupply = 3000;
+        s.luckTokenTotalSupply = 1000;
 
 
         // add your own state variables 

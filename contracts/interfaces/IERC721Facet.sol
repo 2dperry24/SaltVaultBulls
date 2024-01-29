@@ -166,13 +166,9 @@ interface IERC721Facet {
   function erc721mintingLive() external view returns (bool);
   function erc721setMintingLive(bool _bool) external; 
 
-
-
   function erc721getApprovalHistory(address owner) external view returns (LibSharedStructs.IndividualApprovalRecord[] memory individualApprovals, LibSharedStructs.OperatorApprovalRecord[] memory operatorApprovals); 
 
-
   function erc721setBaseUri(string memory _newBaseURI) external;
-
 
   function erc721setBullsContractAddress(address _contract) external;
 
@@ -182,13 +178,19 @@ interface IERC721Facet {
 
   function erc721getWalletsForExternalContract() external view returns (address, address, address);
 
-
   function erc721getAvailableFreeGemTokenMints(address _owner) external view returns (uint256);
-
 
   function erc721mintGemTokens(address _addressToMintTo, uint256 _numberOfCreditsToUse, uint256 _totalMintCost) external;
 
   
+  function erc721mintBattleStones(address _addressToMintTo, uint256 _quantity, uint256 _totalMintCost) external;
+  function getCostAndMintEligibilityBattleStones(uint256 _quantity) external view returns (uint256);
+
+  function erc721mintBattleShields(address _addressToMintTo, uint256 _quantity, uint256 _totalMintCost) external;
+  function getCostAndMintEligibilityBattleShields(uint256 _quantity) external view returns (uint256);
+
+  function erc721mintLuckTokens(address _addressToMintTo, uint256 _quantity, uint256 _totalMintCost) external;
+  function getCostAndMintEligibilityLuckTokens(uint256 _quantity) external view returns (uint256);
 }
 
 

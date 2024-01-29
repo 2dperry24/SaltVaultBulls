@@ -171,7 +171,7 @@ describe("InitializationTest", async function () {
         saltVaultBulls = await SaltVaultBulls.deploy(diamondAddress)
         await saltVaultBulls.waitForDeployment()
 
-        // ERC721 External  Salt Vault Bulls
+        // ERC721 External  SVB Gem Tokens
         const SVB_GemTokens = await ethers.getContractFactory("SVB_GemTokens")
         svbGemTokens = await SVB_GemTokens.deploy(diamondAddress)
         await svbGemTokens.waitForDeployment()

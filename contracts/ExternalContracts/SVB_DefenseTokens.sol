@@ -16,7 +16,7 @@ import "../interfaces/IERC721Facet.sol";
 
 
 
-contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
+contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
 
     using SafeERC20 for IERC20;
     using Strings for uint256;
@@ -24,8 +24,9 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
     IERC721Facet erc721Facet;
 
     address public usdcTokenContract;
-    address public royaltiesWallet;
     address public procurementWallet;
+    address public royaltiesWallet;
+    address public saltVaultBulls;
     
 
 
@@ -33,7 +34,7 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
     address public diamondAddress;
 
     constructor(address _diamondAddress)
-        ERC721('Salt Valt Bulls','SVB')
+        ERC721('SVB Defense Tokens','SVBDT')
         Ownable()
     {
             // Set the diamond address
@@ -42,9 +43,9 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
         // Initialize the erc721Facet with the diamond address
         erc721Facet = IERC721Facet(_diamondAddress);
 
-        erc721Facet.erc721setCollection('Salt Vault Bulls', 'SVB', 'ipfs://startingData/',".json");
+        erc721Facet.erc721setCollection('SVB Defense Tokens', 'SVBDT', 'ipfs://startingData/',".json");
 
-        erc721Facet.erc721setBullsContractAddress(address(this));
+        erc721Facet.erc721setGemTokenContractAddress(address(this));
 
         // Retrieve the needed addresses from the erc721Facet
         (usdcTokenContract, royaltiesWallet, procurementWallet) = erc721Facet.erc721getWalletsForExternalContract();
@@ -52,80 +53,120 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
     }
 
 
-    function mint(uint256 _rarity, address _addressToMintTo) external nonReentrant {
-    
-        if (_rarity < 0 || _rarity > 6) {
-            revert("Number not within rarity Range");
-        }
-      
-        uint256 _mintCost = getCostAndMintEligibility(_rarity);
+    function mintBattleStones(uint256 _quantity) public nonReentrant {
+        require(_quantity > 0, "Must mint at least one NFT");
+
+        uint256 _mintCost = getCostAndMintEligibilityBattleStones(_quantity);
 
         // if _mintCost is zero, either minting is not live or rarity is sold out. 
         if (_mintCost == 0 ) {revert("Minting is not live or this rarity is sold out");}
 
         // Transfer usdc
-        IERC20(usdcTokenContract).safeTransferFrom(_addressToMintTo, diamondAddress, _mintCost);
+        IERC20(usdcTokenContract).safeTransferFrom(_msgSender(), diamondAddress, _mintCost);
 
-
-        erc721Facet.mintBull(_rarity, _addressToMintTo);
-
+        erc721Facet.erc721mintBattleStones(_msgSender(), _quantity, _mintCost);
     }
 
 
+    function mintBattleShields(uint256 _quantity) public nonReentrant {
+        require(_quantity > 0, "Must mint at least one NFT");
 
-
-    function mintOTC(uint256 _rarity, address _addressToMintTo) external nonReentrant {
-    
-        if (_rarity < 0 || _rarity > 6) {
-            revert("Number not within rarity Range");
-        }
-
-        if(_msgSender() != procurementWallet) {revert("must be procurement wallet");}
-      
-        uint256 _mintCost = getCostAndMintEligibility(_rarity);
+        uint256 _mintCost = getCostAndMintEligibilityBattleShields(_quantity);
 
         // if _mintCost is zero, either minting is not live or rarity is sold out. 
         if (_mintCost == 0 ) {revert("Minting is not live or this rarity is sold out");}
 
+        // Transfer usdc
+        IERC20(usdcTokenContract).safeTransferFrom(_msgSender(), diamondAddress, _mintCost);
 
-        erc721Facet.mintBull(_rarity, _addressToMintTo);
+        erc721Facet.erc721mintBattleShields(_msgSender(), _quantity, _mintCost);
+    }
 
+    function mintLuckTokens(uint256 _quantity) public nonReentrant {
+        require(_quantity > 0, "Must mint at least one NFT");
+
+        uint256 _mintCost = getCostAndMintEligibilityLuckTokens(_quantity);
+
+        // if _mintCost is zero, either minting is not live or rarity is sold out. 
+        if (_mintCost == 0 ) {revert("Minting is not live or this rarity is sold out");}
+
+        // Transfer usdc
+        IERC20(usdcTokenContract).safeTransferFrom(_msgSender(), diamondAddress, _mintCost);
+
+        erc721Facet.erc721mintLuckTokens(_msgSender(), _quantity, _mintCost);
     }
 
 
 
+    /**
+     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
+     */
+    function getCostAndMintEligibilityBattleStones(uint256 _quantity) public view returns (uint256) {
 
+        if (_quantity > 10) {revert("10 of less mints per tx only");}
+
+        if (_quantity < 1) {revert("quantity can't be zero");}
+
+        return erc721Facet.getCostAndMintEligibilityBattleStones(_quantity);
+    }
+
+    /**
+     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
+     */
+    function getCostAndMintEligibilityBattleShields(uint256 _quantity) public view returns (uint256) {
+
+        if (_quantity > 10) {revert("10 of less mints per tx only");}
+
+        if (_quantity < 1) {revert("quantity can't be zero");}
+
+        return erc721Facet.getCostAndMintEligibilityBattleShields(_quantity);
+    }
+
+
+    /**
+     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
+     */
+    function getCostAndMintEligibilityLuckTokens(uint256 _quantity) public view returns (uint256) {
+
+        if (_quantity > 10) {revert("10 of less mints per tx only");}
+
+        if (_quantity < 1) {revert("quantity can't be zero");}
+
+        return erc721Facet.getCostAndMintEligibilityLuckTokens(_quantity);
+    }
 
 
 
 
     // paper.xyz check for minting
-    function checkClaimEligibility(uint256 _rarity, uint256 _quantity) external view returns (string memory) {
-        uint256 result = getCostAndMintEligibility(_rarity);
-        if (_quantity != 1) {
-            return "Only 1 mint per tx";
-        } else if (result == 0) {
-            return "Mint is not Live or Rarity sold is out";
+    function checkClaimEligibilityBattleStones(uint256 _quantity) external view returns (string memory) {
+        uint256 result = getCostAndMintEligibilityBattleStones(_quantity);(_quantity);
+        if (result == 0) {
+            return "Mint is not Live or Battle Stones are sold out";
         }
         return "";
     }
 
 
-   /**
-     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
-     */
-    function getCostAndMintEligibility(uint256 _rarity) public view returns (uint256) {
-        return erc721Facet.getCostAndMintEligibilityOfBulls(_rarity);
+
+    function checkClaimEligibilityBattleShields(uint256 _quantity) external view returns (string memory) {
+        uint256 result = getCostAndMintEligibilityBattleShields(_quantity);(_quantity);
+        if (result == 0) {
+            return "Mint is not Live or Battle Shields are sold out";
+        }
+        return "";
     }
 
 
-
-    function getAvailableFreeGemTokenMints() public view returns (uint256) {
-        
-        return erc721Facet.erc721getAvailableFreeGemTokenMints(_msgSender());
+    function checkClaimEligibilityLuckTokens(uint256 _quantity) external view returns (string memory) {
+        uint256 result = getCostAndMintEligibilityLuckTokens(_quantity);(_quantity);
+        if (result == 0) {
+            return "Mint is not Live or Luck Tokens are sold out";
+        }
+        return "";
     }
 
-
+    //    
     function name() public view override returns (string memory) {
         return erc721Facet.erc721name();
     }
@@ -201,8 +242,6 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
 
 
 
-
-
   /*
     IERC721 interface
   */
@@ -254,7 +293,6 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
     }
 
 
-
     // ADMIN
     function setMintingLive(bool _bool) external onlyOwner {
         // Check if all required addresses are set
@@ -284,3 +322,5 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
     }
 
 }
+
+

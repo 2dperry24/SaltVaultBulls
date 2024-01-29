@@ -49,6 +49,16 @@ struct Bull {
 }
 
 
+///////////////////////////////
+//// Defend The Mine Info /////
+///////////////////////////////
+
+
+struct DefenseTokens {
+    uint256 index;
+    uint256 value;
+}
+
 
 
 ////////////////////////
@@ -104,8 +114,7 @@ struct AppStorage {
     uint256 vaultCouncilBalance;
     uint256 gemTokenChallangeBalance; // amount that will be dispersed to winners of the Gem Token Challenge Game
     uint256 gemTokenSalesBalance;     // amount of USDC when gemTokens are bought with USDC and not with credits after minting bulls
-
-
+    uint256 defenseTokenSalesBalance; // amount of USDC spent on defense items (battle stones, battle shields, luck tokens)
 
 
   
@@ -165,7 +174,6 @@ struct AppStorage {
 
     // ========== Salt  ========== //
 
-
     // price for the salt type in USDC
     uint256 grainCost;
     uint256 pillarCost;
@@ -183,9 +191,7 @@ struct AppStorage {
 
     Vault[] vaults;
     mapping(uint256 => bool) allowedCompoundingRates;
-
     mapping(uint256 => uint256[]) totalVaultRewardPointsForCycle;  // Keeps track of total reward points for each cycle as a receipt   
-
     mapping(uint256 => uint256[]) totalVaultProfitForCycle;  // Keeps track of profits deposited in the vault over time as a receipt   
     
     // ========== Vault Council ========== //
@@ -193,6 +199,26 @@ struct AppStorage {
     uint256[] vaultCouncil;
     mapping(uint256 => bool) indexInVaultCouncil;
 
+
+
+ // ========== Defend The Mine  ========== //
+
+    address defenseTokensExternalContractAddress;
+    uint256 defenseTokenMintCost;
+
+    mapping(uint256 => DefenseTokens) defenseTokens;
+    uint256 battleStoneTotalSupply;
+    uint256 battleStoneCurrentIndex;
+
+    uint256 battleShieldTotalSupply;
+    uint256 battleShieldCurrentIndex;
+
+    uint256 luckTokenTotalSupply;
+    uint256 luckTokenCurrentIndex;
+     
+    uint256[] shuffledBattleStoneIndices;
+    uint256[] shuffledBattleShieldIndices;
+    uint256[] shuffledLuckTokenIndices;
 
     // ========== Counters ========== //
     uint256 aum;
