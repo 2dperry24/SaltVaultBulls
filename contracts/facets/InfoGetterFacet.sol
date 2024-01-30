@@ -15,23 +15,11 @@ contract InfoGetterFacet  {
     AppStorage internal s;
 
 
-    function getRarityInformationForBull(uint256 rarity) external view returns (uint256, uint256, uint256, uint256) {
-        return (s.rarityProperties[rarity].mintCost, s.rarityProperties[rarity].rewardMultiplier, s.rarityProperties[rarity].currentIndex, s.rarityProperties[rarity].lastIndex );
-    }
-
-
-
-    function getBullInformation(uint256 _index) external view returns (uint256, uint256, uint256, uint256, uint256,uint256) {
-        return (s.bulls[_index].rarity, s.bulls[_index].grains, s.bulls[_index].pillars, s.bulls[_index].sheets, s.bulls[_index].cubes, s.bulls[_index].totalVaultedSalt );
-    }
-
-
     // global reward total 
 
     function getGlobalRewardTotal() external view returns (uint256) {
         return s.globalPayoutAmount;
     }
-
 
 
     // Balances
@@ -66,10 +54,6 @@ contract InfoGetterFacet  {
 
 
 
-
-    function getMintCost(uint256 rarity) external view returns (uint256) {
-        return s.rarityProperties[rarity].mintCost;
-    }
 
 
     function getUsdcContractAddress() external view returns (address) {

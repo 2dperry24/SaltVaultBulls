@@ -13,7 +13,7 @@ import {LibAppStorage} from "../libraries/LibAppStorage.sol";
 import "hardhat/console.sol";
 
 
-contract VaultFacet {
+contract VaultsFacet {
 
     using LibSafeERC20 for IERC20;
 

@@ -30,8 +30,9 @@ describe("InitializationTest", async function () {
     let mockedERC721Enumerable: Contract
     let mockedUSDC: Contract
     let saltVaultToken: any
-    let gemTokenChallengeFacet: any
-    let defenseFacet: any
+    let bullsFacet: any
+    let gemTokensFacet: any
+    let defenseTokensFacet: any
 
     let owner: any
     let newOwner: any
@@ -56,8 +57,9 @@ describe("InitializationTest", async function () {
         saltRepositoryFacet = await ethers.getContractAt("SaltRepositoryFacet", diamondAddress)
         infoGetterFacet = await ethers.getContractAt("InfoGetterFacet", diamondAddress)
         adminSetterFacet = await ethers.getContractAt("AdminSetterFacet", diamondAddress)
-        gemTokenChallengeFacet = await ethers.getContractAt("GemTokenChallengeFacet", diamondAddress)
-        defenseFacet = await ethers.getContractAt("DefenseFacet", diamondAddress)
+        bullsFacet = await ethers.getContractAt("BullsFacet", diamondAddress)
+        gemTokensFacet = await ethers.getContractAt("GemTokensFacet", diamondAddress)
+        defenseTokensFacet = await ethers.getContractAt("DefenseTokensFacet", diamondAddress)
 
         // Get a list of available signers
         signers = await ethers.getSigners()
@@ -87,10 +89,15 @@ describe("InitializationTest", async function () {
         saltVaultBulls = await SaltVaultBulls.deploy(diamondAddress)
         await saltVaultBulls.waitForDeployment()
 
-        // ERC721 External  Salt Vault Bulls
+        // ERC721 External  Defense Tokens
         const SVB_DefenseTokens = await ethers.getContractFactory("SVB_DefenseTokens")
         svbDefenseTokens = await SVB_DefenseTokens.deploy(diamondAddress)
         await svbDefenseTokens.waitForDeployment()
+
+        // ERC721 External  Gem Tokens
+        const SVB_GemTokens = await ethers.getContractFactory("SVB_GemTokens")
+        svbGemTokens = await SVB_GemTokens.deploy(diamondAddress)
+        await svbGemTokens.waitForDeployment()
 
         // Transfer tokens from signers[30] to signers[1] through signers[17]
         const amount = ethers.parseUnits("10000", 6) // Assuming MockedUSDC uses 6 decimal places
@@ -103,31 +110,15 @@ describe("InitializationTest", async function () {
 
         let shuffledBattleStones = [1005, 525, 2705, 926, 2582, 2162, 1394, 1057, 2704, 1522, 491, 2885, 2107, 1179, 683, 2017, 230, 1285, 166, 1678]
 
-        defenseFacet.connect(owner).addShuffledIndexesBatchBattleStones(shuffledBattleStones)
+        defenseTokensFacet.connect(owner).addShuffledIndexesBatchBattleStones(shuffledBattleStones)
 
         let shuffledBattleShields = [5505, 3221, 5607, 4043, 3384, 3415, 3366, 4075, 4343, 4451, 3872, 5652, 4999, 5265, 3061, 3129, 4091, 3588, 5853, 5968]
 
-        defenseFacet.connect(owner).addShuffledIndexesBatchBattleShields(shuffledBattleShields)
+        defenseTokensFacet.connect(owner).addShuffledIndexesBatchBattleShields(shuffledBattleShields)
 
         let shuffledLuckTokens = [6929, 6538, 6014, 6814, 6292, 6276, 6255, 6513, 6611, 6897, 6720, 6171, 6301, 6505, 6688, 6447, 6594, 6585, 6266, 6193]
 
-        defenseFacet.connect(owner).addShuffledIndexesBatchLuckTokens(shuffledLuckTokens)
-
-        // let redTokenData = [
-        //     [1, 225, 1], // 225 tokens
-        //     [226, 445, 2], // 220 tokens
-        //     [446, 660, 3], // 215 tokens
-        //     [661, 870, 4], // 210 tokens
-        //     [871, 1075, 5], // 205 tokens
-        //     [1076, 1275, 10], // 200 tokens
-        //     [1276, 1470, 50], // 195 tokens
-        //     [1471, 1660, 100], // 190 tokens
-        //     [1661, 1845, 500], //185 tokens
-        //     [1846, 2025, 1000], // 180 tokens
-        //     [2026, 2200, 5000], // 175 tokens
-        //     [2201, 2370, 10000], // 170 tokens
-        //     [2371, 2500, 50000], // 130 tokens
-        // ]
+        defenseTokensFacet.connect(owner).addShuffledIndexesBatchLuckTokens(shuffledLuckTokens)
     })
 
     it("should have seven facets -- call to facetAddresses function", async () => {
@@ -135,7 +126,7 @@ describe("InitializationTest", async function () {
             addresses.push(address)
         }
         console.log({ addresses })
-        assert.equal(addresses.length, 12)
+        assert.equal(addresses.length, 13)
     })
 
     it("Test p10 has 10,000 mocked USDC and contracts have zero", async function () {

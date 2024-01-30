@@ -33,13 +33,14 @@ export async function deploy() {
         "OwnershipFacet",
         "ERC721Facet",
         "SaltRepositoryFacet",
-        "GemTokenChallengeFacet",
         "InfoGetterFacet",
         "AdminSetterFacet",
+        "BullsFacet",
+        "GemTokensFacet",
+        "DefenseTokensFacet",
         "BankFacet",
-        "VaultFacet",
+        "VaultsFacet",
         "VaultCouncilFacet",
-        "DefenseFacet",
     ]
     const cut = []
     for (const FacetName of FacetNames) {

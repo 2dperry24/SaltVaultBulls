@@ -651,10 +651,7 @@ contract ERC721Facet is IERC721Facet {
     }
 
 
-    function erc721setGemTokenContractAddress(address _contract) external {
-        s.gemTokensExternalContractAddress = _contract;
-    }
-
+ 
 
     ///////// Approval Tracking ///////////
 
@@ -701,44 +698,6 @@ contract ERC721Facet is IERC721Facet {
 
 
     /**
-     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
-    */
-    function getCostAndMintEligibilityOfBulls(uint256 _rarity) external view returns (uint256) {
-
-        if (s.rarityProperties[_rarity].currentIndex > s.rarityProperties[_rarity].lastIndex) {
-            return 0;
-        }
-
-        if (!s.erc721mintingLive[msg.sender]) {
-            return 0;
-        }
-
-        uint256 transactionCost = s.rarityProperties[_rarity].mintCost;
-        return transactionCost;
-    }
-
-
-
-    /**
-     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
-    */
-    function getCostAndMintEligibilityOfGemTokens(uint256 _quanity) external view returns (uint256) {
-
-        if (s.gemTokenCurrentIndex + _quanity  > s.gemTokenTotalSupply) {
-            return 0;
-        }
-
-        if (!s.erc721mintingLive[msg.sender]) {
-            return 0;
-        }
-
-        uint256 transactionCost = s.gemTokenMintCost * _quanity;
-        return transactionCost;
-    }
-
-
-
-    /**
      * @dev Return the wallets needed on the external ERC721 contract
     */
     function erc721getWalletsForExternalContract() external view returns (address, address, address) {
@@ -753,7 +712,7 @@ contract ERC721Facet is IERC721Facet {
     /**
      * @dev Return bool to see if external contract is allowed to call Minting Bulls
     */
-    function isExternalContractApprovedForERC721Minting() external view returns (bool) {
+    function erc721isExternalContractApprovedForMinting() external view returns (bool) {
         return s.erc721authorizedExternalContracts[msg.sender];
     }
 
@@ -762,7 +721,7 @@ contract ERC721Facet is IERC721Facet {
     //////// Bulls //////
     /////////////////////
 
-    function mintBull(uint256 rarity, address _addressToMintTo) external {
+    function erc721mintBull(uint256 rarity, address _addressToMintTo) external {
 
         require(s.erc721authorizedExternalContracts[msg.sender], "Not an approved external contract");
 
@@ -844,15 +803,6 @@ contract ERC721Facet is IERC721Facet {
         emit Transfer(address(0), _addressToMintTo, indexToMint);
 
     }
-
-
-
-    // Gem tokens 
-
-    function erc721getAvailableFreeGemTokenMints(address _owner) public view returns (uint256) {
-        return s.gemTokenMintCredits[_owner];
-    }
-
 
 
     //////////////////////////
@@ -1031,64 +981,6 @@ contract ERC721Facet is IERC721Facet {
 
 
 
-
-
-    /**
-     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
-    */
-    function getCostAndMintEligibilityBattleStones(uint256 _quanity) external view returns (uint256) {
-
-        if (s.battleStoneCurrentIndex + _quanity  > s.battleStoneTotalSupply) {
-            return 0;
-        }
-
-        if (!s.erc721mintingLive[msg.sender]) {  
-            return 0;
-        }
-
-        uint256 transactionCost = s.defenseTokenMintCost * _quanity;
-        return transactionCost;
-    }
-
-
-
-
-    /**
-     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
-    */
-    function getCostAndMintEligibilityBattleShields(uint256 _quanity) external view returns (uint256) {
-
-        if (s.battleShieldCurrentIndex + _quanity  > s.battleShieldTotalSupply) {
-            return 0;
-        }
-
-        if (!s.erc721mintingLive[msg.sender]) {  
-            return 0;
-        }
-
-        uint256 transactionCost = s.defenseTokenMintCost * _quanity;
-        return transactionCost;
-    }
-
-
-
-
-    /**
-     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
-    */
-    function getCostAndMintEligibilityLuckTokens(uint256 _quanity) external view returns (uint256) {
-
-        if (s.luckTokenCurrentIndex + _quanity  > s.luckTokenTotalSupply) {
-            return 0;
-        }
-
-        if (!s.erc721mintingLive[msg.sender]) {  
-            return 0;
-        }
-
-        uint256 transactionCost = s.defenseTokenMintCost * _quanity;
-        return transactionCost;
-    }
 
 
 }

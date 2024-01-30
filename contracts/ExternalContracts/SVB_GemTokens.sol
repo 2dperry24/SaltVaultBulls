@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 
 import "../libraries/LibSharedStruct.sol";
 import "../interfaces/IERC721Facet.sol";
+import "../interfaces/IGemTokens.sol";
 
 
 
@@ -22,6 +23,8 @@ contract SVB_GemTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
     using Strings for uint256;
  
     IERC721Facet erc721Facet;
+
+    IGemTokens iGemTokens;
 
     address public usdcTokenContract;
     address public procurementWallet;
@@ -43,9 +46,13 @@ contract SVB_GemTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
         // Initialize the erc721Facet with the diamond address
         erc721Facet = IERC721Facet(_diamondAddress);
 
+        // Initialize iGemTokens with the diamond address
+        iGemTokens = IGemTokens(_diamondAddress);
+
+
         erc721Facet.erc721setCollection('SVB Gem Tokens', 'SVBGT', 'ipfs://startingData/',".json");
 
-        erc721Facet.erc721setGemTokenContractAddress(address(this));
+        iGemTokens.setGemTokenContractAddress(address(this));
 
         // Retrieve the needed addresses from the erc721Facet
         (usdcTokenContract, royaltiesWallet, procurementWallet) = erc721Facet.erc721getWalletsForExternalContract();
@@ -59,7 +66,7 @@ contract SVB_GemTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
         if (allowedToMint == 0 ) {revert("Minting is not live for GemTokens using Credits or they are Minted Out");}
 
         // check if they have enough free credits
-        uint256 accountCredits = erc721Facet.erc721getAvailableFreeGemTokenMints(_msgSender());
+        uint256 accountCredits = iGemTokens.getAvailableFreeGemTokenMints(_msgSender());
         if (_numberOfCreditsToUse > accountCredits){revert("Exceeds the credits for this address");}
 
 
@@ -93,7 +100,7 @@ contract SVB_GemTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
 
         if (_quantity < 1) {revert("quantity can't be zero");}
 
-        return erc721Facet.getCostAndMintEligibilityOfGemTokens(_quantity);
+        return iGemTokens.getCostAndMintEligibilityOfGemTokens(_quantity);
     }
 
 
@@ -110,7 +117,7 @@ contract SVB_GemTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
 
     function getAvailableFreeGemTokenMints() public view returns (uint256) {
         
-        return erc721Facet.erc721getAvailableFreeGemTokenMints(_msgSender());
+        return iGemTokens.getAvailableFreeGemTokenMints(_msgSender());
     }
 
     //    
@@ -161,7 +168,7 @@ contract SVB_GemTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
 
 
     function isContractApprovedToMint() external view returns (bool) {
-        return erc721Facet.isExternalContractApprovedForERC721Minting();
+        return erc721Facet.erc721isExternalContractApprovedForMinting();
     }
 
 
@@ -184,10 +191,6 @@ contract SVB_GemTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
 
         return (royaltiesWallet, royaltyAmount);
     }
-
-
-
-
 
 
 
@@ -249,8 +252,12 @@ contract SVB_GemTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
             revert("All address must be set first");
         }
 
-        if (erc721Facet.isExternalContractApprovedForERC721Minting() == false) {
+        if (erc721Facet.erc721isExternalContractApprovedForMinting() == false) {
             revert("not set to mint yet on the ERC721 facet yet");
+        }
+
+        if (iGemTokens.getShuffledGemTokenCount() == 10000) {
+            revert("not filled Luck Tokens stone indices yet");
         }
 
         erc721Facet.erc721setMintingLive(_bool);

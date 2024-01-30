@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 
 import "../libraries/LibSharedStruct.sol";
 import "../interfaces/IERC721Facet.sol";
+import "../interfaces/IBulls.sol";
 
 
 
@@ -22,6 +23,10 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
     using Strings for uint256;
  
     IERC721Facet erc721Facet;
+
+    IBulls iBulls;
+
+
 
     address public usdcTokenContract;
     address public royaltiesWallet;
@@ -42,9 +47,12 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
         // Initialize the erc721Facet with the diamond address
         erc721Facet = IERC721Facet(_diamondAddress);
 
+        // Initialize ibulls with the diamond address
+        iBulls = IBulls(_diamondAddress);
+
         erc721Facet.erc721setCollection('Salt Vault Bulls', 'SVB', 'ipfs://startingData/',".json");
 
-        erc721Facet.erc721setBullsContractAddress(address(this));
+        iBulls.setBullsContractAddress(address(this));
 
         // Retrieve the needed addresses from the erc721Facet
         (usdcTokenContract, royaltiesWallet, procurementWallet) = erc721Facet.erc721getWalletsForExternalContract();
@@ -67,7 +75,7 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
         IERC20(usdcTokenContract).safeTransferFrom(_addressToMintTo, diamondAddress, _mintCost);
 
 
-        erc721Facet.mintBull(_rarity, _addressToMintTo);
+        erc721Facet.erc721mintBull(_rarity, _addressToMintTo);
 
     }
 
@@ -88,7 +96,7 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
         if (_mintCost == 0 ) {revert("Minting is not live or this rarity is sold out");}
 
 
-        erc721Facet.mintBull(_rarity, _addressToMintTo);
+        erc721Facet.erc721mintBull(_rarity, _addressToMintTo);
 
     }
 
@@ -115,14 +123,7 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
      * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
      */
     function getCostAndMintEligibility(uint256 _rarity) public view returns (uint256) {
-        return erc721Facet.getCostAndMintEligibilityOfBulls(_rarity);
-    }
-
-
-
-    function getAvailableFreeGemTokenMints() public view returns (uint256) {
-        
-        return erc721Facet.erc721getAvailableFreeGemTokenMints(_msgSender());
+        return iBulls.getCostAndMintEligibilityOfBulls(_rarity);
     }
 
 
@@ -173,7 +174,8 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
 
 
     function isContractApprovedToMint() external view returns (bool) {
-        return erc721Facet.isExternalContractApprovedForERC721Minting();
+        return erc721Facet.erc721isExternalContractApprovedForMinting();
+                       
     }
 
 
@@ -196,10 +198,6 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
 
         return (royaltiesWallet, royaltyAmount);
     }
-
-
-
-
 
 
 
@@ -262,7 +260,7 @@ contract SaltVaultBulls is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 
             revert("All address must be set first");
         }
 
-        if (erc721Facet.isExternalContractApprovedForERC721Minting() == false) {
+        if (erc721Facet.erc721isExternalContractApprovedForMinting() == false) {
             revert("not set to mint yet on the ERC721 facet yet");
         }
 

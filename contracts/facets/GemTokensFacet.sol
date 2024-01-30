@@ -14,7 +14,7 @@ import {LibAppStorage} from "../libraries/LibAppStorage.sol";
 import "hardhat/console.sol";
 
 
-contract GemTokenChallengeFacet  {
+contract GemTokensFacet  {
 
     using LibSafeERC20 for IERC20;
 
@@ -343,6 +343,36 @@ contract GemTokenChallengeFacet  {
         return (token.index, token.value, token.color);
     }
 
+
+
+    function getAvailableFreeGemTokenMints(address _owner) public view returns (uint256) {
+        return s.gemTokenMintCredits[_owner];
+    }
+
+
+
+
+    /**
+     * @dev Return the total price for the mint transaction if still available and return 0 if not allowed.
+    */
+    function getCostAndMintEligibilityOfGemTokens(uint256 _quanity) external view returns (uint256) {
+
+        if (s.gemTokenCurrentIndex + _quanity  > s.gemTokenTotalSupply) {
+            return 0;
+        }
+
+        if (!s.erc721mintingLive[msg.sender]) {
+            return 0;
+        }
+
+        uint256 transactionCost = s.gemTokenMintCost * _quanity;
+        return transactionCost;
+    }
+
+
+   function setGemTokenContractAddress(address _contract) external {
+        s.gemTokensExternalContractAddress = _contract;
+    }
 
 
 }

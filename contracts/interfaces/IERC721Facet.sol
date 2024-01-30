@@ -148,13 +148,6 @@ interface IERC721Facet {
 
 
 
-  // function erc721getApprovalHistory(address auth, uint256 tokenId) external view returns (LibSharedStructs.ApprovalRecord[] memory);
-
-
-  function mintBull(uint256 rarity, address minter) external;
-
-  function getCostAndMintEligibilityOfBulls(uint256 _rarity) external view returns (uint256);
-
   function erc721baseURI() external view returns (string memory);
   function erc721baseExtension() external view returns (string memory);
   function erc721tokenURI(uint256 tokenId) external view  returns (string memory);
@@ -162,7 +155,8 @@ interface IERC721Facet {
   function erc721walletOfOwner(address _owner) external view returns (uint256[] memory);
   function erc721tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256); 
 
-  function isExternalContractApprovedForERC721Minting() external view returns (bool);
+  function erc721isExternalContractApprovedForMinting() external view returns (bool);
+
   function erc721mintingLive() external view returns (bool);
   function erc721setMintingLive(bool _bool) external; 
 
@@ -170,27 +164,19 @@ interface IERC721Facet {
 
   function erc721setBaseUri(string memory _newBaseURI) external;
 
-  function erc721setBullsContractAddress(address _contract) external;
-
-  function erc721setGemTokenContractAddress(address _contract) external;
-
-  function getCostAndMintEligibilityOfGemTokens(uint256 _quantity) external view returns (uint256);
-
   function erc721getWalletsForExternalContract() external view returns (address, address, address);
 
-  function erc721getAvailableFreeGemTokenMints(address _owner) external view returns (uint256);
+
+
+
+  function erc721mintBull(uint256 rarity, address minter) external;
 
   function erc721mintGemTokens(address _addressToMintTo, uint256 _numberOfCreditsToUse, uint256 _totalMintCost) external;
 
-  
+
   function erc721mintBattleStones(address _addressToMintTo, uint256 _quantity, uint256 _totalMintCost) external;
-  function getCostAndMintEligibilityBattleStones(uint256 _quantity) external view returns (uint256);
-
   function erc721mintBattleShields(address _addressToMintTo, uint256 _quantity, uint256 _totalMintCost) external;
-  function getCostAndMintEligibilityBattleShields(uint256 _quantity) external view returns (uint256);
-
   function erc721mintLuckTokens(address _addressToMintTo, uint256 _quantity, uint256 _totalMintCost) external;
-  function getCostAndMintEligibilityLuckTokens(uint256 _quantity) external view returns (uint256);
 }
 
 

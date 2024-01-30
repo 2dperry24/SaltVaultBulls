@@ -13,7 +13,12 @@ import "@openzeppelin/contracts/utils/Context.sol";
 
 import "../libraries/LibSharedStruct.sol";
 import "../interfaces/IERC721Facet.sol";
+import "../interfaces/IDefenseTokens.sol";
 
+
+
+
+import "hardhat/console.sol";
 
 
 contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC2981 {
@@ -22,6 +27,8 @@ contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC29
     using Strings for uint256;
  
     IERC721Facet erc721Facet;
+
+    IDefenseTokens iDefenseTokens;
 
     address public usdcTokenContract;
     address public procurementWallet;
@@ -43,9 +50,13 @@ contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC29
         // Initialize the erc721Facet with the diamond address
         erc721Facet = IERC721Facet(_diamondAddress);
 
+        // Initialize iDefenseTokens with the diamond address
+        iDefenseTokens = IDefenseTokens(_diamondAddress);
+
+
         erc721Facet.erc721setCollection('SVB Defense Tokens', 'SVBDT', 'ipfs://startingData/',".json");
 
-        erc721Facet.erc721setGemTokenContractAddress(address(this));
+        iDefenseTokens.setDefenseTokensContractAddress(address(this));
 
         // Retrieve the needed addresses from the erc721Facet
         (usdcTokenContract, royaltiesWallet, procurementWallet) = erc721Facet.erc721getWalletsForExternalContract();
@@ -107,7 +118,7 @@ contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC29
 
         if (_quantity < 1) {revert("quantity can't be zero");}
 
-        return erc721Facet.getCostAndMintEligibilityBattleStones(_quantity);
+        return iDefenseTokens.getCostAndMintEligibilityBattleStones(_quantity);
     }
 
     /**
@@ -119,7 +130,7 @@ contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC29
 
         if (_quantity < 1) {revert("quantity can't be zero");}
 
-        return erc721Facet.getCostAndMintEligibilityBattleShields(_quantity);
+        return iDefenseTokens.getCostAndMintEligibilityBattleShields(_quantity);
     }
 
 
@@ -132,7 +143,7 @@ contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC29
 
         if (_quantity < 1) {revert("quantity can't be zero");}
 
-        return erc721Facet.getCostAndMintEligibilityLuckTokens(_quantity);
+        return iDefenseTokens.getCostAndMintEligibilityLuckTokens(_quantity);
     }
 
 
@@ -214,7 +225,7 @@ contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC29
 
 
     function isContractApprovedToMint() external view returns (bool) {
-        return erc721Facet.isExternalContractApprovedForERC721Minting();
+        return erc721Facet.erc721isExternalContractApprovedForMinting();
     }
 
 
@@ -300,9 +311,22 @@ contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC29
             revert("All address must be set first");
         }
 
-        if (erc721Facet.isExternalContractApprovedForERC721Minting() == false) {
-            revert("not set to mint yet on the ERC721 facet yet");
-        }
+        // if (erc721Facet.erc721isExternalContractApprovedForMinting() == false) {
+        //     revert("not set to mint yet on the ERC721 facet yet");
+        // }
+
+        // if (iDefenseTokens.getShuffledBattleStonesCount() != 3000) {
+        //     revert("not filled Battle Stone indices yet");
+        // }
+
+        // if (iDefenseTokens.getShuffledBattleShieldsCount() != 3000) {
+        //         revert("not filled Battle Shield indices yet");
+        //     }
+
+        // if (iDefenseTokens.getShuffledLuckTokensCount() != 1000) {
+        //         revert("not filled Luck Tokens stone indices yet");
+        //     }
+
 
         erc721Facet.erc721setMintingLive(_bool);
     }
@@ -314,7 +338,6 @@ contract SVB_DefenseTokens is ERC721Enumerable, Ownable, ReentrancyGuard, IERC29
         royaltiesWallet = _royaltiesWallet;
 
     }
-
 
 
     function setBaseURI(string memory _newBaseURI) external onlyOwner {

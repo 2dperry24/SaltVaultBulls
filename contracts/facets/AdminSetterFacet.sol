@@ -37,7 +37,7 @@ contract AdminSetterFacet {
     }
 
 
-      // Function to authorize a address to control Gem Token Game
+    // Function to authorize a address to control Gem Token Game
     function setAuthorizeAdminForGemTokenFacet(address _address, bool authorized) external {
         
         LibDiamond.enforceIsContractOwner();
@@ -45,10 +45,15 @@ contract AdminSetterFacet {
         s.authorizedAdminForGemTokenFacet[_address] = authorized;
     }
 
+   
+    function extendBlankBullsLastIndex(uint256 _newLastIndex) external {
 
+        LibDiamond.enforceIsContractOwner();
 
+        if (_newLastIndex <= s.rarityProperties[6].lastIndex) { revert("must be more than current lastIndex");}
 
-
+        s.rarityProperties[6].lastIndex = _newLastIndex;
+    }
 
 }
 

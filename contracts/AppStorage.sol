@@ -222,7 +222,7 @@ struct AppStorage {
 
     // ========== Counters ========== //
     uint256 aum;
-    uint256 globalPayoutAmount;
+    uint256 globalPayoutAmount;   // the total amount of the rewards ever paid out by the project
     
     // ========== AUM Bonuses ========== //
 
@@ -285,9 +285,7 @@ struct AppStorage {
  
 
 
-    // ======== Salt Vault Token Information ===========
-
-
+ 
 
 
 }
